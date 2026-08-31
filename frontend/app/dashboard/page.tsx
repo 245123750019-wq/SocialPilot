@@ -55,6 +55,11 @@ export default function Dashboard() {
     return null;
   }
 
+  const logout = () => {
+    localStorage.removeItem("access_token");
+    window.location.href = "/";
+  };
+
   return (
     <main className="min-h-screen bg-slate-100">
 
@@ -62,24 +67,39 @@ export default function Dashboard() {
       <nav className="bg-white border-b border-slate-200">
         <div className="max-w-7xl mx-auto px-8 py-4 flex items-center justify-between">
 
+          {/* Logo */}
           <div>
             <h1 className="text-2xl font-bold text-indigo-600">
               SocialPilot
             </h1>
+
             <p className="text-xs text-slate-500">
               Social Media Management
             </p>
           </div>
 
-          <button
-            onClick={() => {
-              localStorage.removeItem("access_token");
-              window.location.href = "/";
-            }}
-            className="px-4 py-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 transition"
-          >
-            Logout
-          </button>
+          {/* Navigation buttons */}
+          <div className="flex items-center gap-3">
+
+            {/* Profile button */}
+            <button
+              onClick={() => {
+                window.location.href = "/profile";
+              }}
+              className="px-4 py-2 rounded-lg bg-indigo-600 text-white font-medium hover:bg-indigo-700 transition"
+            >
+              Profile
+            </button>
+
+            {/* Logout button */}
+            <button
+              onClick={logout}
+              className="px-4 py-2 rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 transition"
+            >
+              Logout
+            </button>
+
+          </div>
 
         </div>
       </nav>
@@ -89,6 +109,7 @@ export default function Dashboard() {
 
         {/* Welcome */}
         <div className="mb-8">
+
           <p className="text-indigo-600 font-semibold mb-1">
             Dashboard
           </p>
@@ -100,12 +121,15 @@ export default function Dashboard() {
           <p className="text-slate-500 mt-2">
             Manage your social media accounts from one place.
           </p>
+
         </div>
 
         {/* Cards */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
 
+          {/* User ID */}
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+
             <p className="text-sm text-slate-500">
               User ID
             </p>
@@ -113,9 +137,12 @@ export default function Dashboard() {
             <p className="text-2xl font-bold text-slate-900 mt-2">
               {user.id}
             </p>
+
           </div>
 
+          {/* Account */}
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+
             <p className="text-sm text-slate-500">
               Account
             </p>
@@ -123,9 +150,12 @@ export default function Dashboard() {
             <p className="text-lg font-semibold text-slate-900 mt-2">
               {user.email}
             </p>
+
           </div>
 
+          {/* Role */}
           <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+
             <p className="text-sm text-slate-500">
               Role
             </p>
@@ -133,6 +163,7 @@ export default function Dashboard() {
             <p className="text-2xl font-bold text-indigo-600 mt-2">
               {user.role_id === 1 ? "Admin" : "Team Member"}
             </p>
+
           </div>
 
         </div>
@@ -141,7 +172,9 @@ export default function Dashboard() {
         <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
 
           <div className="flex items-center justify-between mb-6">
+
             <div>
+
               <h3 className="text-xl font-bold text-slate-900">
                 Account Information
               </h3>
@@ -149,18 +182,25 @@ export default function Dashboard() {
               <p className="text-slate-500 text-sm mt-1">
                 Your SocialPilot account details
               </p>
+
             </div>
 
+            {/* User avatar */}
             <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center">
+
               <span className="text-indigo-600 font-bold text-lg">
                 {user.name.charAt(0).toUpperCase()}
               </span>
+
             </div>
+
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
 
+            {/* Full Name */}
             <div className="bg-slate-50 rounded-xl p-4">
+
               <p className="text-sm text-slate-500">
                 Full Name
               </p>
@@ -168,9 +208,12 @@ export default function Dashboard() {
               <p className="font-semibold text-slate-900 mt-1">
                 {user.name}
               </p>
+
             </div>
 
+            {/* Email */}
             <div className="bg-slate-50 rounded-xl p-4">
+
               <p className="text-sm text-slate-500">
                 Email
               </p>
@@ -178,9 +221,12 @@ export default function Dashboard() {
               <p className="font-semibold text-slate-900 mt-1">
                 {user.email}
               </p>
+
             </div>
 
+            {/* User ID */}
             <div className="bg-slate-50 rounded-xl p-4">
+
               <p className="text-sm text-slate-500">
                 User ID
               </p>
@@ -188,23 +234,29 @@ export default function Dashboard() {
               <p className="font-semibold text-slate-900 mt-1">
                 {user.id}
               </p>
+
             </div>
 
+            {/* Account Role */}
             <div className="bg-slate-50 rounded-xl p-4">
+
               <p className="text-sm text-slate-500">
                 Account Role
               </p>
 
               <p className="font-semibold text-indigo-600 mt-1">
-                {user.role_id === 1 ? "Administrator" : "Team Member"}
+                {user.role_id === 1
+                  ? "Administrator"
+                  : "Team Member"}
               </p>
+
             </div>
 
           </div>
 
         </div>
 
-        {/* Coming soon */}
+        {/* Social Accounts */}
         <div className="mt-8 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl p-8 text-white">
 
           <h3 className="text-xl font-bold">
