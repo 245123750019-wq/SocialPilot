@@ -33,7 +33,7 @@ def connect_social_account(
     new_account = SocialAccount(
         user_id=user_id,
         platform=account_data.platform,
-        account_name=account_data.account_name,
+        username=account_data.username,
         access_token=account_data.access_token
     )
 
@@ -49,9 +49,11 @@ def get_social_accounts(
     user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
-    accounts = db.query(SocialAccount).filter(
-        SocialAccount.user_id == user_id
-    ).all()
+    accounts = (
+        db.query(SocialAccount)
+        .filter(SocialAccount.user_id == user_id)
+        .all()
+    )
 
     return accounts
 
@@ -62,10 +64,14 @@ def get_social_account(
     user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
-    account = db.query(SocialAccount).filter(
-        SocialAccount.id == account_id,
-        SocialAccount.user_id == user_id
-    ).first()
+    account = (
+        db.query(SocialAccount)
+        .filter(
+            SocialAccount.account_id == account_id,
+            SocialAccount.user_id == user_id
+        )
+        .first()
+    )
 
     if not account:
         raise HTTPException(
@@ -82,10 +88,14 @@ def disconnect_social_account(
     user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
-    account = db.query(SocialAccount).filter(
-        SocialAccount.id == account_id,
-        SocialAccount.user_id == user_id
-    ).first()
+    account = (
+        db.query(SocialAccount)
+        .filter(
+            SocialAccount.account_id == account_id,
+            SocialAccount.user_id == user_id
+        )
+        .first()
+    )
 
     if not account:
         raise HTTPException(

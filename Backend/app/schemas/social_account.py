@@ -3,14 +3,14 @@ from pydantic import BaseModel
 
 class SocialAccountCreate(BaseModel):
     platform: str
-    account_name: str
-    access_token: str
+    username: str
+    access_token: str | None = None
 
 
 class SocialAccountResponse(BaseModel):
-    id: int
+    account_id: int
     platform: str
-    account_name: str
+    username: str
 
     class Config:
         from_attributes = True

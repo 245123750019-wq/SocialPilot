@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from datetime import datetime, timezone
 
 from app.database.database import SessionLocal
 from app.models.user import User
@@ -47,8 +48,8 @@ def register(
     new_user = User(
         name=user_data.name,
         email=user_data.email,
-        password_hash=hash_password(user_data.password),
-        role_id=user_data.role_id
+        password=hash_password(user_data.password),
+        created_at=datetime.now(timezone.utc)
     )
 
     db.add(new_user)
@@ -57,7 +58,7 @@ def register(
 
     return {
         "message": "User registered successfully",
-        "user_id": new_user.id
+        "user_id": new_user.user_id
     }
 
 
@@ -80,7 +81,7 @@ def login(
 
     if not verify_password(
         form_data.password,
-        user.password_hash
+        user.password
     ):
         raise HTTPException(
             status_code=401,
@@ -89,8 +90,7 @@ def login(
 
     access_token = create_access_token(
         data={
-            "user_id": user.id,
-            "role_id": user.role_id
+            "user_id": user.user_id
         }
     )
 
@@ -108,7 +108,7 @@ def get_me(
     db: Session = Depends(get_db)
 ):
     user = db.query(User).filter(
-        User.id == user_id
+        User.user_id == user_id
     ).first()
 
     if not user:
@@ -118,8 +118,7 @@ def get_me(
         )
 
     return {
-        "id": user.id,
+        "id": user.user_id,
         "name": user.name,
-        "email": user.email,
-        "role_id": user.role_id
+        "email": user.email
     }
