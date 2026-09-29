@@ -10,4 +10,5 @@ class SocialAccount(Base):
     platform = Column(String(50), nullable=False)
     username = Column(String(100), nullable=False)
     access_token = Column(Text, nullable=True)
+    refresh_token = Column(Text, nullable=True)
     created_at = Column(DateTime, nullable=True)

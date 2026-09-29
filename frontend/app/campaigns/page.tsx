@@ -11,6 +11,9 @@ interface Campaign {
   status: string | null;
   start_date: string | null;
   end_date: string | null;
+  budget: number;
+  revenue: number;
+  roi_percentage: number;
 }
 
 export default function CampaignsPage() {
@@ -160,29 +163,59 @@ export default function CampaignsPage() {
 
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-5">
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mt-5">
 
-                    <div>
-                      <p className="text-xs text-slate-500">
-                        Start Date
-                      </p>
+<div>
+  <p className="text-xs text-slate-500">
+    Start Date
+  </p>
 
-                      <p className="text-sm font-medium text-slate-900 mt-1">
-                        {campaign.start_date || "Not set"}
-                      </p>
-                    </div>
+  <p className="text-sm font-medium text-slate-900 mt-1">
+    {campaign.start_date || "Not set"}
+  </p>
+</div>
 
-                    <div>
-                      <p className="text-xs text-slate-500">
-                        End Date
-                      </p>
+<div>
+  <p className="text-xs text-slate-500">
+    End Date
+  </p>
 
-                      <p className="text-sm font-medium text-slate-900 mt-1">
-                        {campaign.end_date || "Not set"}
-                      </p>
-                    </div>
+  <p className="text-sm font-medium text-slate-900 mt-1">
+    {campaign.end_date || "Not set"}
+  </p>
+</div>
 
-                  </div>
+<div>
+  <p className="text-xs text-slate-500">
+    Budget
+  </p>
+
+  <p className="text-sm font-medium text-slate-900 mt-1">
+    ₹{Number(campaign.budget || 0).toLocaleString("en-IN")}
+  </p>
+</div>
+
+<div>
+  <p className="text-xs text-slate-500">
+    Revenue
+  </p>
+
+  <p className="text-sm font-medium text-slate-900 mt-1">
+    ₹{Number(campaign.revenue || 0).toLocaleString("en-IN")}
+  </p>
+</div>
+
+<div>
+  <p className="text-xs text-slate-500">
+    ROI
+  </p>
+
+  <p className="text-sm font-semibold text-indigo-600 mt-1">
+    {Number(campaign.roi_percentage || 0).toFixed(2)}%
+  </p>
+</div>
+
+</div>
 
                 </div>
 

@@ -66,6 +66,9 @@ export default function Dashboard() {
   const [user, setUser] = useState<User | null>(null);
   const [accounts, setAccounts] = useState<SocialAccount[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState<
+  "overview" | "campaigns" | "engagement" | "audience" | "roi"
+>("overview");
   const [campaignAnalytics, setCampaignAnalytics] =
   useState<CampaignAnalytics | null>(null);
 
@@ -193,9 +196,10 @@ const [comparisonAnalytics, setComparisonAnalytics] =
             // Use the first campaign belonging to the logged-in user
             if (campaignsDataList.length > 0) {
               const selectedCampaign = campaignsDataList[0];
+              setSelectedCampaignId(selectedCampaign.campaign_id);
 
-            const campaignResponse = await fetch(
-            `http://127.0.0.1:8000/analytics/campaigns/${selectedCampaign.campaign_id}`,
+              const campaignResponse = await fetch(
+                `http://127.0.0.1:8000/analytics/campaigns/${selectedCampaign.campaign_id}`,
             {
             headers: {
             Authorization: `Bearer ${token}`,
@@ -442,441 +446,241 @@ const instagramAccount =
           </p>
 
         </div>
+        {/* ==================== DASHBOARD TABS ==================== */}
+
+<div className="mb-8 bg-white rounded-2xl border border-slate-200 shadow-sm p-2">
+  <div className="flex flex-wrap gap-2">
+
+    {[
+      { id: "overview", label: "Overview", icon: "📊" },
+      { id: "campaigns", label: "Campaigns", icon: "📢" },
+      { id: "engagement", label: "Engagement", icon: "💬" },
+      { id: "audience", label: "Audience", icon: "👥" },
+      { id: "roi", label: "ROI", icon: "💰" },
+    ].map((tab) => (
+      <button
+        key={tab.id}
+        onClick={() =>
+          setActiveTab(
+            tab.id as
+              | "overview"
+              | "campaigns"
+              | "engagement"
+              | "audience"
+              | "roi"
+          )
+        }
+        className={`flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition ${
+          activeTab === tab.id
+            ? "bg-indigo-600 text-white shadow-sm"
+            : "text-slate-600 hover:bg-indigo-50 hover:text-indigo-600"
+        }`}
+      >
+        <span>{tab.icon}</span>
+        <span>{tab.label}</span>
+      </button>
+    ))}
+
+  </div>
+</div>
 
         {/* ==================== MILESTONE 2 NAVIGATION ==================== */}
-
-        <section className="mb-8 bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
-
-          <div className="mb-6">
-            <h3 className="text-xl font-bold text-slate-900">
-              Content & Publishing
-            </h3>
-
-            <p className="text-slate-500 text-sm mt-1">
-              Create, schedule, monitor and manage your social media posts.
-            </p>
-          </div>
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-
-            {/* Create Post */}
-            <a
-              href="/create-post"
-              className="group rounded-xl border border-slate-200 p-5 hover:border-indigo-500 hover:bg-indigo-50 transition"
-            >
-              <div className="w-11 h-11 rounded-lg bg-indigo-100 flex items-center justify-center mb-4">
-                <span className="text-xl">✏️</span>
-              </div>
-
-              <h4 className="font-bold text-slate-900">
-                Create Post
-              </h4>
-
-              <p className="text-sm text-slate-500 mt-2">
-                Create and schedule content for your social media platforms.
-              </p>
-
-              <p className="text-sm text-indigo-600 font-semibold mt-4">
-                Create →
-              </p>
-            </a>
-
-            {/* Publishing Calendar */}
-            <a
-              href="/calendar"
-              className="group rounded-xl border border-slate-200 p-5 hover:border-indigo-500 hover:bg-indigo-50 transition"
-            >
-              <div className="w-11 h-11 rounded-lg bg-indigo-100 flex items-center justify-center mb-4">
-                <span className="text-xl">📅</span>
-              </div>
-
-              <h4 className="font-bold text-slate-900">
-                Publishing Calendar
-              </h4>
-
-              <p className="text-sm text-slate-500 mt-2">
-                View and manage scheduled posts by date and time.
-              </p>
-
-              <p className="text-sm text-indigo-600 font-semibold mt-4">
-                View Calendar →
-              </p>
-            </a>
-
-            {/* Publishing Queue */}
-            <a
-              href="/publishing-queue"
-              className="group rounded-xl border border-slate-200 p-5 hover:border-indigo-500 hover:bg-indigo-50 transition"
-            >
-              <div className="w-11 h-11 rounded-lg bg-indigo-100 flex items-center justify-center mb-4">
-                <span className="text-xl">📋</span>
-              </div>
-
-              <h4 className="font-bold text-slate-900">
-                Publishing Queue
-              </h4>
-
-              <p className="text-sm text-slate-500 mt-2">
-                Manage scheduled, pending, failed and published posts.
-              </p>
-
-              <p className="text-sm text-indigo-600 font-semibold mt-4">
-                View Queue →
-              </p>
-            </a>
-
-            {/* Publishing Logs */}
-            <a
-              href="/publishing-logs"
-              className="group rounded-xl border border-slate-200 p-5 hover:border-indigo-500 hover:bg-indigo-50 transition"
-            >
-              <div className="w-11 h-11 rounded-lg bg-indigo-100 flex items-center justify-center mb-4">
-                <span className="text-xl">📊</span>
-              </div>
-
-              <h4 className="font-bold text-slate-900">
-                Publishing Logs
-              </h4>
-
-              <p className="text-sm text-slate-500 mt-2">
-                Track publishing activity and publishing results.
-              </p>
-
-              <p className="text-sm text-indigo-600 font-semibold mt-4">
-                View Logs →
-              </p>
-            </a>
-
-          </div>
-        </section>
-
         {/* ==================== SUMMARY CARDS ==================== */}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-
-          {/* User ID */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
-
-            <p className="text-sm text-slate-500">
-              User ID
-            </p>
-
-            <p className="text-2xl font-bold text-slate-900 mt-2">
-              {user.id}
-            </p>
-
-          </div>
-
-          {/* Account */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
-
-            <p className="text-sm text-slate-500">
-              Account
-            </p>
-
-            <p className="text-lg font-semibold text-slate-900 mt-2">
-              {user.email}
-            </p>
-
-          </div>
-
-        </div>
-
         {/* ==================== ACCOUNT INFORMATION ==================== */}
-
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
-
-          <div className="flex items-center justify-between mb-6">
-
-            <div>
-
-              <h3 className="text-xl font-bold text-slate-900">
-                Account Information
-              </h3>
-
-              <p className="text-slate-500 text-sm mt-1">
-                Your SocialPilot account details
-              </p>
-
-            </div>
-
-            {/* Avatar */}
-            <div className="w-12 h-12 rounded-full bg-indigo-100 flex items-center justify-center">
-
-              <span className="text-indigo-600 font-bold text-lg">
-                {user.name.charAt(0).toUpperCase()}
-              </span>
-
-            </div>
-
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-
-            {/* Full Name */}
-            <div className="bg-slate-50 rounded-xl p-4">
-
-              <p className="text-sm text-slate-500">
-                Full Name
-              </p>
-
-              <p className="font-semibold text-slate-900 mt-1">
-                {user.name}
-              </p>
-
-            </div>
-
-            {/* Email */}
-            <div className="bg-slate-50 rounded-xl p-4">
-
-              <p className="text-sm text-slate-500">
-                Email
-              </p>
-
-              <p className="font-semibold text-slate-900 mt-1">
-                {user.email}
-              </p>
-
-            </div>
-
-            {/* User ID */}
-            <div className="bg-slate-50 rounded-xl p-4">
-
-              <p className="text-sm text-slate-500">
-                User ID
-              </p>
-
-              <p className="font-semibold text-slate-900 mt-1">
-                {user.id}
-              </p>
-
-            </div>
-
-          </div>
-
-        </div>
-
         {/* ==================== SOCIAL ACCOUNTS ==================== */}
+      {/* Analytics Dashboard */}
+<div className="mt-8 space-y-8">
 
-        <div className="mt-8 bg-white rounded-2xl shadow-sm border border-slate-200 p-8">
+{/* ==================== OVERVIEW TAB ==================== */}
 
-          {/* Header */}
-          <div className="flex items-center justify-between mb-6">
+{activeTab === "overview" && (
+  <div className="space-y-8">
 
-            <div>
+    {/* Key Metrics */}
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
 
-              <h3 className="text-xl font-bold text-slate-900">
-                Social Accounts
-              </h3>
+      {/* Engagement */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+        <p className="text-sm font-medium text-slate-500">
+          Engagement
+        </p>
 
-              <p className="text-slate-500 text-sm mt-1">
-                Your connected social media accounts.
-              </p>
+        <p className="text-3xl font-bold text-slate-900 mt-2">
+          {campaignAnalytics
+            ? Number(campaignAnalytics.total_likes || 0) +
+              Number(campaignAnalytics.total_comments || 0) +
+              Number(campaignAnalytics.total_shares || 0)
+            : 0}
+        </p>
 
-            </div>
+        <p className="text-xs text-slate-400 mt-2">
+          Likes + comments + shares
+        </p>
+      </div>
 
-            <button
-              onClick={() => setShowConnectForm(true)}
-              className="bg-indigo-600 text-white px-5 py-2.5 rounded-lg font-semibold hover:bg-indigo-700 transition"
-            >
-              + Connect Account
-            </button>
+      {/* Reach */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+        <p className="text-sm font-medium text-slate-500">
+          Reach
+        </p>
 
-          </div>
+        <p className="text-3xl font-bold text-slate-900 mt-2">
+          {campaignAnalytics
+            ? Number(campaignAnalytics.total_reach || 0)
+            : 0}
+        </p>
 
-          {/* Connect Form */}
-          {showConnectForm && (
-            <div className="mb-6 bg-slate-50 border border-slate-200 rounded-xl p-6">
+        <p className="text-xs text-slate-400 mt-2">
+          Total users reached
+        </p>
+      </div>
 
-              <h4 className="text-lg font-bold text-slate-900 mb-4">
-                Connect Social Account
-              </h4>
+      {/* Impressions */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+        <p className="text-sm font-medium text-slate-500">
+          Impressions
+        </p>
 
-              <form
-                onSubmit={connectAccount}
-                className="space-y-4"
-              >
+        <p className="text-3xl font-bold text-slate-900 mt-2">
+          {campaignAnalytics
+            ? Number(campaignAnalytics.total_impressions || 0)
+            : 0}
+        </p>
 
-                {/* Platform */}
-                <div>
+        <p className="text-xs text-slate-400 mt-2">
+          Total content views
+        </p>
+      </div>
 
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Platform
-                  </label>
+      {/* Clicks */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
+        <p className="text-sm font-medium text-slate-500">
+          Clicks
+        </p>
 
-                  <select
-                    value={platform}
-                    onChange={(e) =>
-                      setPlatform(e.target.value)
-                    }
-                    className="w-full px-4 py-3 rounded-lg border border-slate-200 bg-white text-slate-900 outline-none focus:border-indigo-500"
-                  >
-                    <option value="Instagram">
-                      Instagram
-                    </option>
+        <p className="text-3xl font-bold text-slate-900 mt-2">
+          {campaignAnalytics
+            ? Number(campaignAnalytics.total_clicks || 0)
+            : 0}
+        </p>
 
-                    <option value="Facebook">
-                      Facebook
-                    </option>
+        <p className="text-xs text-slate-400 mt-2">
+          Total link clicks
+        </p>
+      </div>
 
-                    <option value="X">
-                      X
-                    </option>
+    </div>
+          {/* Engagement Overview */}
+          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
 
-                    <option value="LinkedIn">
-                      LinkedIn
-                    </option>
-                  </select>
+<div className="mb-6">
+  <h2 className="text-xl font-bold text-slate-900">
+    Engagement Overview
+  </h2>
 
-                </div>
+  <p className="text-sm text-slate-500 mt-1">
+    Engagement generated by your selected campaign.
+  </p>
+</div>
 
-                {/* Username */}
-                <div>
+{engagementChartData.length > 0 ? (
+  <div className="h-80">
 
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Username
-                  </label>
+    <ResponsiveContainer width="100%" height="100%">
+      <BarChart data={engagementChartData}>
 
-                  <input
-                    type="text"
-                    value={username}
-                    onChange={(e) =>
-                      setUsername(e.target.value)
-                    }
-                    placeholder="@my_test_account"
-                    className="w-full px-4 py-3 rounded-lg border border-slate-200 bg-white text-slate-900 outline-none focus:border-indigo-500"
-                    required
-                  />
+        <CartesianGrid strokeDasharray="3 3" />
 
-                </div>
+        <XAxis dataKey="metric" />
 
-                {/* Access Token */}
-                <div>
+        <YAxis />
+        <Tooltip
+            formatter={(value, name) => [value, String(name)]}
+            labelFormatter={(label) => String(label)}
+          />
 
-                  <label className="block text-sm font-semibold text-slate-700 mb-2">
-                    Access Token
-                  </label>
+        <Bar
+          dataKey="value"
+          fill="#4f46e5"
+          radius={[6, 6, 0, 0]}
+        />
 
-                  <input
-                    type="text"
-                    value={accessToken}
-                    onChange={(e) =>
-                      setAccessToken(e.target.value)
-                    }
-                    placeholder="test-token-123"
-                    className="w-full px-4 py-3 rounded-lg border border-slate-200 bg-white text-slate-900 outline-none focus:border-indigo-500"
-                    required
-                  />
+      </BarChart>
+    </ResponsiveContainer>
 
-                  <p className="text-xs text-slate-400 mt-2">
-                    Use a test token for now. Real OAuth
-                    integration will be added later.
-                  </p>
+  </div>
+) : (
+  <div className="h-80 flex items-center justify-center text-slate-500">
+    No engagement data available.
+  </div>
+)}
 
-                </div>
+</div>
 
-                {/* Buttons */}
-                <div className="flex gap-3 pt-2">
+    {/* Audience Growth */}
+    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
 
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setShowConnectForm(false)
-                    }
-                    className="px-5 py-2.5 rounded-lg border border-slate-200 text-slate-600 font-semibold hover:bg-white transition"
-                  >
-                    Cancel
-                  </button>
+      <div className="mb-6">
+        <h2 className="text-xl font-bold text-slate-900">
+          Audience Growth
+        </h2>
 
-                  <button
-                    type="submit"
-                    disabled={connecting}
-                    className="px-5 py-2.5 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition disabled:opacity-50"
-                  >
-                    {connecting
-                      ? "Connecting..."
-                      : "Connect Account"}
-                  </button>
+        <p className="text-sm text-slate-500 mt-1">
+          Follower growth over time.
+        </p>
+      </div>
 
-                </div>
+      {audienceHistory.length > 0 ? (
+        <div className="h-80">
 
-              </form>
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={audienceHistory}>
 
-            </div>
-          )}
+              <CartesianGrid strokeDasharray="3 3" />
 
-          {/* Accounts List */}
-          {accounts.length === 0 ? (
+              <XAxis
+                dataKey="recorded_at"
+                tickFormatter={(value) =>
+                  new Date(value).toLocaleDateString()
+                }
+              />
 
-            <div className="text-center py-10 border-2 border-dashed border-slate-200 rounded-xl">
+              <YAxis />
 
-              <div className="text-4xl mb-3">
-                📱
-              </div>
+              <Tooltip
+                  labelFormatter={(value) =>
+                    new Date(String(value)).toLocaleDateString()
+                  }
+              />
 
-              <h4 className="font-semibold text-slate-900">
-                No social accounts connected
-              </h4>
+              <Line
+                type="monotone"
+                dataKey="followers_count"
+                stroke="#4f46e5"
+                strokeWidth={3}
+                dot={{ r: 4 }}
+              />
 
-              <p className="text-sm text-slate-500 mt-1">
-                Connect a social media account to get started.
-              </p>
-
-            </div>
-
-          ) : (
-
-            <div className="space-y-4">
-
-              {accounts.map((account) => (
-
-                <div
-                  key={account.account_id}
-                  className="flex items-center justify-between border border-slate-200 rounded-xl p-5"
-                >
-
-                  <div className="flex items-center gap-4">
-
-                    <div className="w-12 h-12 rounded-xl bg-indigo-100 flex items-center justify-center">
-
-                      <span className="text-indigo-600 font-bold">
-                        {account.platform
-                          .charAt(0)
-                          .toUpperCase()}
-                      </span>
-
-                    </div>
-
-                    <div>
-
-                      <p className="font-semibold text-slate-900">
-                        {account.username}
-                      </p>
-
-                      <p className="text-sm text-slate-500">
-                        {account.platform}
-                      </p>
-
-                    </div>
-
-                  </div>
-
-                </div>
-
-              ))}
-
-            </div>
-
-          )}
+            </LineChart>
+          </ResponsiveContainer>
 
         </div>
+      ) : (
+        <div className="h-80 flex items-center justify-center text-slate-500">
+          No audience growth data available.
+        </div>
+      )}
 
-      </div>
-      {/* Analytics Dashboard */}
-      <div className="mt-8 space-y-8">
+    </div>
 
-        {/* Campaign Analytics */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
+  </div>
+)}
+
+{/* Campaigns Tab */}
+{activeTab === "campaigns" && (
+                <>
+                  {/* Campaign Analytics */}
+                  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
 
           <div className="mb-6">
             <h2 className="text-2xl font-bold text-slate-900">
@@ -1029,9 +833,13 @@ const instagramAccount =
               No campaign analytics available.
             </p>
           )}
-
         </div>
+      </>
+    )}
+        {activeTab === "engagement" && (
+        <>
         {/* Interactive Engagement Chart */}
+        
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm mt-6">
         <div className="mb-5">
         <h2 className="text-lg font-semibold text-slate-900">
@@ -1054,6 +862,10 @@ const instagramAccount =
         </ResponsiveContainer>
         </div>
         </div>
+        </>
+        )}
+        {activeTab === "audience" && (
+        <>
         {/* Audience Growth Trend */}
         <div className="mt-6 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
         <div className="mb-5">
@@ -1095,6 +907,10 @@ const instagramAccount =
     </ResponsiveContainer>
   </div>
 </div>
+</>
+)}
+      {activeTab === "campaigns" && (
+      <>
         {/* Campaign Comparison */}
 {comparisonAnalytics && campaignAnalytics && (
   <div className="mt-6 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
@@ -1173,6 +989,7 @@ const instagramAccount =
           </p>
         </div>
       </div>
+      
 
       {/* Comparison Campaign */}
       <div className="rounded-xl bg-slate-50 p-5">
@@ -1240,8 +1057,12 @@ const instagramAccount =
     </div>
   </div>
 )}
+  </>
+)}
 {/* ROI Tracking */}
-{campaignAnalytics && (
+{activeTab === "roi" && (
+  <>
+    {campaignAnalytics && (
   <div className="mt-6 bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
     <div className="mb-5">
       <h2 className="text-lg font-semibold text-slate-900">
@@ -1308,7 +1129,11 @@ const instagramAccount =
 
     </div>
   </div>
-)}
+    )}
+    </>
+  )}
+{activeTab === "audience" && (
+  <>
 {/* Advanced Audience Insights */}
 {audienceInsights.length > 0 && (
   <div className="mt-6 bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
@@ -1378,6 +1203,10 @@ const instagramAccount =
     </div>
   </div>
 )}
+</>
+)}
+        {activeTab === "audience" && (
+        <>
 
         {/* Audience Growth & Performance Report */}
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
@@ -1499,14 +1328,17 @@ const instagramAccount =
             <p className="text-slate-500">
               No audience analytics available.
             </p>
-          )}
+                )}
 
-        </div>
+</div>
 
-        </div>
+</>
+)}
 
-      
+</div>
 
-    </main>
-  );
+</div>
+
+</main>
+);
 }

@@ -38,6 +38,15 @@ interface CampaignReport {
   platform_breakdown: Record<string, number>;
 }
 
+interface CampaignPost {
+  post_id: number;
+  campaign_id: number | null;
+  content: string | null;
+  status: string | null;
+  scheduled_time: string | null;
+  scheduled_at: string | null;
+}
+
 export default function CampaignDetailsPage() {
   const params = useParams();
   const router = useRouter();
@@ -48,6 +57,7 @@ export default function CampaignDetailsPage() {
   const [summary, setSummary] = useState<Summary | null>(null);
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [report, setReport] = useState<CampaignReport | null>(null);
+  const [campaignPosts, setCampaignPosts] = useState<CampaignPost[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
@@ -96,6 +106,16 @@ export default function CampaignDetailsPage() {
         if (reportResponse.ok) {
           const reportData = await reportResponse.json();
           setReport(reportData);
+        }
+
+        const postsResponse = await fetch(
+          `http://127.0.0.1:8000/campaigns/${campaignId}/posts`,
+          { headers }
+        );
+        
+        if (postsResponse.ok) {
+          const postsData = await postsResponse.json();
+          setCampaignPosts(Array.isArray(postsData) ? postsData : []);
         }
 
         const analyticsResponse = await fetch(
@@ -445,9 +465,64 @@ export default function CampaignDetailsPage() {
             </div>
 
           </div>
-        </section>
+          </section>
+
+{/* Content Grouping */}
+<section className="mt-8">
+  <h2 className="text-xl font-bold text-slate-900 mb-4">
+    Content Grouping
+  </h2>
+
+  <div className="bg-white rounded-2xl border border-slate-200 p-6">
+
+    {campaignPosts.length === 0 ? (
+      <p className="text-sm text-slate-500">
+        No content has been added to this campaign yet.
+      </p>
+    ) : (
+      <div className="space-y-4">
+
+        {campaignPosts.map((post) => (
+          <div
+            key={post.post_id}
+            className="border border-slate-200 rounded-xl p-5"
+          >
+
+            <div className="flex items-start justify-between gap-4">
+
+              <div>
+                <p className="text-sm text-slate-500">
+                  Post #{post.post_id}
+                </p>
+
+                <p className="text-base font-medium text-slate-900 mt-1">
+                  {post.content || "No content available."}
+                </p>
+              </div>
+
+              <span className="px-3 py-1 rounded-full bg-indigo-50 text-indigo-700 text-sm font-medium capitalize">
+                {post.status || "draft"}
+              </span>
+
+            </div>
+
+            {(post.scheduled_time || post.scheduled_at) && (
+              <p className="text-sm text-slate-500 mt-4">
+                Scheduled:{" "}
+                {post.scheduled_time || post.scheduled_at}
+              </p>
+            )}
+
+          </div>
+        ))}
 
       </div>
-    </main>
-  );
+    )}
+
+  </div>
+</section>
+
+</div>
+</main>
+);
 }

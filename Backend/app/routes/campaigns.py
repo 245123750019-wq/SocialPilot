@@ -241,8 +241,8 @@ def create_campaign(
         status=campaign_data.status,
         start_date=campaign_data.start_date,
         end_date=campaign_data.end_date,
-        budget=campaign.budget,
-        revenue=campaign.revenue,
+        budget=campaign_data.budget,
+        revenue=campaign_data.revenue,
     )
 
     db.add(campaign)

@@ -4,14 +4,34 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
 
-const menuItems = [
-  { label: "Dashboard", href: "/dashboard", icon: "🏠" },
-  { label: "Create Post", href: "/create-post", icon: "✏️" },
-  { label: "Campaigns", href: "/campaigns", icon: "📢" },
-  { label: "Publishing Calendar", href: "/calendar", icon: "📅" },
-  { label: "Publishing Queue", href: "/publishing-queue", icon: "📋" },
-  { label: "Publishing Logs", href: "/publishing-logs", icon: "📊" },
-  { label: "Profile", href: "/profile", icon: "👤" },
+const menuSections = [
+  {
+    title: "MAIN",
+    items: [
+      { label: "Dashboard", href: "/dashboard", icon: "🏠" },
+      { label: "Publishing Calendar", href: "/calendar", icon: "📅" },
+    ],
+  },
+  {
+    title: "CONTENT",
+    items: [
+      { label: "Create Post", href: "/create-post", icon: "✏️" },
+      { label: "Publishing Queue", href: "/publishing-queue", icon: "📋" },
+      { label: "Publishing Logs", href: "/publishing-logs", icon: "📊" },
+    ],
+  },
+  {
+    title: "CAMPAIGNS",
+    items: [
+      { label: "Campaigns", href: "/campaigns", icon: "📢" },
+    ],
+  },
+  {
+    title: "ACCOUNT",
+    items: [
+      { label: "Profile", href: "/profile", icon: "👤" },
+    ],
+  },
 ];
 
 export default function Sidebar() {
@@ -59,39 +79,53 @@ export default function Sidebar() {
             className="w-10 h-10 rounded-lg flex items-center justify-center text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 transition"
             title={isOpen ? "Collapse menu" : "Expand menu"}
           >
-            {isOpen ? "☰" : "☰"}
+            ☰
           </button>
         </div>
       </div>
 
-      {/* Menu */}
-      <nav className="flex-1 p-4 space-y-2">
-        {menuItems.map((item) => {
-          const isActive = pathname === item.href;
+      {/* Navigation */}
+      <nav className="flex-1 px-4 py-5 overflow-y-auto">
+        {menuSections.map((section) => (
+          <div key={section.title} className="mb-6">
+            {/* Section title */}
+            {isOpen && (
+              <p className="px-3 mb-2 text-[11px] font-semibold tracking-wider text-slate-400">
+                {section.title}
+              </p>
+            )}
 
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              title={!isOpen ? item.label : undefined}
-              className={`flex items-center rounded-xl text-sm font-medium transition ${
-                isOpen
-                  ? "gap-3 px-4 py-3"
-                  : "justify-center px-2 py-3"
-              } ${
-                isActive
-                  ? "bg-indigo-600 text-white"
-                  : "text-slate-600 hover:bg-indigo-50 hover:text-indigo-600"
-              }`}
-            >
-              <span className="text-base">{item.icon}</span>
+            {/* Section items */}
+            <div className="space-y-1">
+              {section.items.map((item) => {
+                const isActive = pathname === item.href;
 
-              {isOpen && (
-                <span>{item.label}</span>
-              )}
-            </Link>
-          );
-        })}
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    title={!isOpen ? item.label : undefined}
+                    className={`flex items-center rounded-xl text-sm font-medium transition ${
+                      isOpen
+                        ? "gap-3 px-4 py-3"
+                        : "justify-center px-2 py-3"
+                    } ${
+                      isActive
+                        ? "bg-indigo-600 text-white shadow-sm"
+                        : "text-slate-600 hover:bg-indigo-50 hover:text-indigo-600"
+                    }`}
+                  >
+                    <span className="text-base">{item.icon}</span>
+
+                    {isOpen && (
+                      <span>{item.label}</span>
+                    )}
+                  </Link>
+                );
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       {/* Logout */}

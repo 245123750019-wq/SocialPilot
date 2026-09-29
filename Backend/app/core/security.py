@@ -98,3 +98,50 @@ def require_role(required_role_id: int):
             db.close()
 
     return role_checker
+def create_oauth_state(
+    user_id: int,
+    code_verifier: str
+) -> str:
+    expire = datetime.now(timezone.utc) + timedelta(minutes=10)
+
+    payload = {
+        "user_id": user_id,
+        "purpose": "youtube_oauth",
+        "code_verifier": code_verifier,
+        "exp": expire
+    }
+
+    return jwt.encode(
+        payload,
+        SECRET_KEY,
+        algorithm=ALGORITHM
+    )
+
+
+def get_oauth_data_from_state(state: str) -> dict:
+    try:
+        payload = jwt.decode(
+            state,
+            SECRET_KEY,
+            algorithms=[ALGORITHM]
+        )
+
+        if payload.get("purpose") != "youtube_oauth":
+            raise ValueError("Invalid OAuth state")
+
+        user_id = payload.get("user_id")
+        code_verifier = payload.get("code_verifier")
+
+        if user_id is None or code_verifier is None:
+            raise ValueError("Missing OAuth data")
+
+        return {
+            "user_id": int(user_id),
+            "code_verifier": code_verifier
+        }
+
+    except (jwt.JWTError, ValueError):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Invalid or expired OAuth state"
+        )

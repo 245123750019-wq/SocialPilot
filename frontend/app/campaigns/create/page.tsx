@@ -11,6 +11,7 @@ export default function CreateCampaignPage() {
   const [status, setStatus] = useState("draft");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
+  const [budget, setBudget] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -40,6 +41,7 @@ export default function CreateCampaignPage() {
           status,
           start_date: startDate || null,
           end_date: endDate || null,
+          budget: Number(budget) || 0,
         }),
       });
 
@@ -255,6 +257,34 @@ export default function CreateCampaignPage() {
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
+              style={{
+                width: "100%",
+                padding: "13px 14px",
+                border: "1px solid #dbe2ea",
+                borderRadius: "8px",
+                fontSize: "15px",
+                boxSizing: "border-box",
+              }}
+            />
+          </div>
+          <div style={{ marginBottom: "28px" }}>
+            <label
+              style={{
+                display: "block",
+                fontWeight: 600,
+                color: "#172033",
+                marginBottom: "8px",
+              }}
+            >
+              Budget
+            </label>
+
+            <input
+              type="number"
+              value={budget}
+              onChange={(e) => setBudget(e.target.value)}
+              placeholder="Enter campaign budget"
+              min="0"
               style={{
                 width: "100%",
                 padding: "13px 14px",
