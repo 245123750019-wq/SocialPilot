@@ -1,7 +1,8 @@
 import os
 import uuid
 
-from fastapi import APIRouter, UploadFile, File, HTTPException
+from fastapi import APIRouter, UploadFile, File, HTTPException, Depends
+from app.core.security import get_current_user_id
 
 router = APIRouter(
     prefix="/uploads",
@@ -15,7 +16,8 @@ os.makedirs(UPLOAD_DIR, exist_ok=True)
 
 @router.post("/video")
 async def upload_video(
-    file: UploadFile = File(...)
+    file: UploadFile = File(...),
+    user_id: int = Depends(get_current_user_id)
 ):
     if not file.content_type:
         raise HTTPException(

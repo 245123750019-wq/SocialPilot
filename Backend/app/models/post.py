@@ -6,6 +6,11 @@ class Post(Base):
     __tablename__ = "posts"
 
     post_id = Column(Integer, primary_key=True, index=True)
+    user_id = Column(
+    Integer,
+    ForeignKey("users.user_id"),
+    nullable=True
+)
 
     # Campaign relationship will be connected later.
     # The shared database allows this column to be NULL.

@@ -151,3 +151,92 @@ def admin_test(
         "user_id": admin_user.user_id,
         "role": admin_user.role
     }
+# ---------------- ADMIN USER MANAGEMENT ----------------
+
+@router.get("/users")
+def get_all_users(
+    admin_user: User = Depends(require_role("admin")),
+    db: Session = Depends(get_db)
+):
+    users = db.query(User).all()
+
+    return [
+        {
+            "id": user.user_id,
+            "name": user.name,
+            "email": user.email,
+            "role": user.role,
+            "created_at": user.created_at
+        }
+        for user in users
+    ]
+
+
+@router.delete("/users/{user_id}")
+def delete_user(
+    user_id: int,
+    admin_user: User = Depends(require_role("admin")),
+    db: Session = Depends(get_db)
+):
+    if user_id == admin_user.user_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Admin cannot delete their own account"
+        )
+
+    user = db.query(User).filter(
+        User.user_id == user_id
+    ).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
+
+    db.delete(user)
+    db.commit()
+
+    return {
+        "message": "User deleted successfully"
+    }
+
+
+@router.put("/users/{user_id}/role")
+def update_user_role(
+    user_id: int,
+    role: str,
+    admin_user: User = Depends(require_role("admin")),
+    db: Session = Depends(get_db)
+):
+    if role not in ["user", "admin"]:
+        raise HTTPException(
+            status_code=400,
+            detail="Role must be either user or admin"
+        )
+
+    if user_id == admin_user.user_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Admin cannot change their own role"
+        )
+
+    user = db.query(User).filter(
+        User.user_id == user_id
+    ).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
+
+    user.role = role
+    db.commit()
+    db.refresh(user)
+
+    return {
+        "message": "User role updated successfully",
+        "user_id": user.user_id,
+        "role": user.role
+    }

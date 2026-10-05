@@ -95,7 +95,8 @@ def create_draft(
             detail="Draft content cannot be empty."
         )
 
-    new_post = Post(
+        new_post = Post(
+        user_id=user_id,
         content=draft_data.content.strip(),
         status="draft",
         post_type=draft_data.post_type

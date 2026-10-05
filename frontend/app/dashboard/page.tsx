@@ -67,8 +67,11 @@ export default function Dashboard() {
   const [user, setUser] = useState<User | null>(null);
   const [accounts, setAccounts] = useState<SocialAccount[]>([]);
   const [loading, setLoading] = useState(true);
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [adminUsersLoading, setAdminUsersLoading] = useState(false);
+  const [adminUsersError, setAdminUsersError] = useState("");
   const [activeTab, setActiveTab] = useState<
-  "overview" | "campaigns" | "engagement" | "audience" | "roi"
+    "overview" | "campaigns" | "engagement" | "audience" | "roi" | "admin"
 >("overview");
   const [campaignAnalytics, setCampaignAnalytics] =
   useState<CampaignAnalytics | null>(null);
@@ -87,7 +90,7 @@ const [audienceHistory, setAudienceHistory] =
     audience_count: number;
     recorded_at: string | null;
   }
-  
+
   const [audienceInsights, setAudienceInsights] =
     useState<AudienceInsight[]>([]);
   const engagementChartData = campaignAnalytics
@@ -191,7 +194,7 @@ const [comparisonAnalytics, setComparisonAnalytics] =
           const campaignsDataList = Array.isArray(campaignsData)
             ? campaignsData
             : [];
-          
+
           setCampaigns(campaignsDataList);
 
             // Use the first campaign belonging to the logged-in user
@@ -231,13 +234,13 @@ const instagramAccount =
         },
       }
     );
-  
+
     if (audienceResponse.ok) {
       const audienceData = await audienceResponse.json();
-  
+
       if (Array.isArray(audienceData)) {
         setAudienceHistory(audienceData);
-  
+
         if (audienceData.length > 0) {
           setAudienceAnalytics(
             audienceData[audienceData.length - 1]
@@ -245,7 +248,7 @@ const instagramAccount =
         }
       }
     }
-  
+
     const audienceInsightsResponse = await fetch(
       `http://127.0.0.1:8000/analytics/audience-insights/${instagramAccount.account_id}`,
       {
@@ -254,10 +257,10 @@ const instagramAccount =
         },
       }
     );
-  
+
     if (audienceInsightsResponse.ok) {
       const insightsData = await audienceInsightsResponse.json();
-  
+
       if (Array.isArray(insightsData)) {
         setAudienceInsights(insightsData);
       }
@@ -273,18 +276,73 @@ const instagramAccount =
 
     fetchDashboardData();
   }, []);
+
+  // ---------------- ADMIN USER MANAGEMENT ----------------
+
+  const fetchAllUsers = async () => {
+    const token = localStorage.getItem("access_token");
+
+    if (!token) {
+      return;
+    }
+
+    setAdminUsersLoading(true);
+    setAdminUsersError("");
+
+    try {
+      const response = await fetch(
+        "http://127.0.0.1:8000/auth/users",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      if (!response.ok) {
+        if (response.status === 403) {
+          setAdminUsersError(
+            "You do not have permission to manage users."
+          );
+        } else {
+          setAdminUsersError(
+            "Failed to load users."
+          );
+        }
+
+        return;
+      }
+
+      const data = await response.json();
+      setAllUsers(data);
+    } catch (error) {
+      console.error("Error loading users:", error);
+
+      setAdminUsersError(
+        "Unable to connect to server."
+      );
+    } finally {
+      setAdminUsersLoading(false);
+    }
+  };
+  useEffect(() => {
+    if (user?.role === "admin" && activeTab === "admin") {
+      fetchAllUsers();
+    }
+  }, [user, activeTab]);
+
   useEffect(() => {
     const fetchSelectedCampaignAnalytics = async () => {
       if (!selectedCampaignId) {
         return;
       }
-  
+
       const token = localStorage.getItem("access_token");
-  
+
       if (!token) {
         return;
       }
-  
+
       try {
         const response = await fetch(
           `http://127.0.0.1:8000/analytics/campaigns/${selectedCampaignId}`,
@@ -294,7 +352,7 @@ const instagramAccount =
             },
           }
         );
-  
+
         if (response.ok) {
           const data = await response.json();
           setCampaignAnalytics(data);
@@ -303,7 +361,7 @@ const instagramAccount =
         console.error("Error fetching selected campaign analytics:", error);
       }
     };
-  
+
     fetchSelectedCampaignAnalytics();
   }, [selectedCampaignId]);
   useEffect(() => {
@@ -312,13 +370,13 @@ const instagramAccount =
         setComparisonAnalytics(null);
         return;
       }
-  
+
       const token = localStorage.getItem("access_token");
-  
+
       if (!token) {
         return;
       }
-  
+
       try {
         const response = await fetch(
           `http://127.0.0.1:8000/analytics/campaigns/${comparisonCampaignId}`,
@@ -328,7 +386,7 @@ const instagramAccount =
             },
           }
         );
-  
+
         if (response.ok) {
           const data = await response.json();
           setComparisonAnalytics(data);
@@ -340,7 +398,7 @@ const instagramAccount =
         );
       }
     };
-  
+
     fetchComparisonAnalytics();
   }, [comparisonCampaignId]);
 
@@ -455,13 +513,16 @@ const instagramAccount =
 <div className="mb-8 bg-white rounded-2xl border border-slate-200 shadow-sm p-2">
   <div className="flex flex-wrap gap-2">
 
-    {[
-      { id: "overview", label: "Overview", icon: "📊" },
-      { id: "campaigns", label: "Campaigns", icon: "📢" },
-      { id: "engagement", label: "Engagement", icon: "💬" },
-      { id: "audience", label: "Audience", icon: "👥" },
-      { id: "roi", label: "ROI", icon: "💰" },
-    ].map((tab) => (
+  {[
+  { id: "overview", label: "Overview", icon: "📊" },
+  { id: "campaigns", label: "Campaigns", icon: "📢" },
+  { id: "engagement", label: "Engagement", icon: "💬" },
+  { id: "audience", label: "Audience", icon: "👥" },
+  { id: "roi", label: "ROI", icon: "💰" },
+  ...(user.role === "admin"
+    ? [{ id: "admin", label: "User Management", icon: "⚙️" }]
+    : []),
+].map((tab) => (
       <button
         key={tab.id}
         onClick={() =>
@@ -472,6 +533,7 @@ const instagramAccount =
               | "engagement"
               | "audience"
               | "roi"
+              | "admin"
           )
         }
         className={`flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition ${
@@ -701,7 +763,7 @@ const instagramAccount =
                   setSelectedCampaignId(
                   event.target.value ? Number(event.target.value) : null
                     )
-                  } 
+                  }
                   className="w-full max-w-md rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 outline-none focus:border-indigo-400 focus:ring-2 focus:ring-indigo-100"
                 >
                 <option value="">Select a campaign</option>
@@ -843,7 +905,7 @@ const instagramAccount =
         {activeTab === "engagement" && (
         <>
         {/* Interactive Engagement Chart */}
-        
+
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm mt-6">
         <div className="mb-5">
         <h2 className="text-lg font-semibold text-slate-900">
@@ -993,7 +1055,7 @@ const instagramAccount =
           </p>
         </div>
       </div>
-      
+
 
       {/* Comparison Campaign */}
       <div className="rounded-xl bg-slate-50 p-5">
@@ -1340,7 +1402,207 @@ const instagramAccount =
 )}
 
 </div>
+{activeTab === "admin" && user.role === "admin" && (
+  <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
 
+    <div className="mb-6">
+      <h2 className="text-2xl font-bold text-slate-900">
+        User Management
+      </h2>
+
+      <p className="text-slate-500 mt-1">
+        Manage registered users and their account roles.
+      </p>
+    </div>
+
+    {adminUsersLoading ? (
+      <p className="text-slate-500">
+        Loading users...
+      </p>
+    ) : adminUsersError ? (
+      <div className="rounded-xl bg-red-50 border border-red-200 p-4">
+        <p className="text-sm text-red-600">
+          {adminUsersError}
+        </p>
+      </div>
+    ) : allUsers.length === 0 ? (
+      <p className="text-slate-500">
+        No users found.
+      </p>
+    ) : (
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-b border-slate-200 text-left">
+              <th className="px-4 py-3 font-semibold text-slate-600">
+                Name
+              </th>
+
+              <th className="px-4 py-3 font-semibold text-slate-600">
+                Email
+              </th>
+
+              <th className="px-4 py-3 font-semibold text-slate-600">
+                Role
+              </th>
+
+              <th className="px-4 py-3 font-semibold text-slate-600">
+                Actions
+              </th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {allUsers.map((managedUser) => (
+              <tr
+                key={managedUser.id}
+                className="border-b border-slate-100"
+              >
+                <td className="px-4 py-4 font-medium text-slate-900">
+                  {managedUser.name}
+                </td>
+
+                <td className="px-4 py-4 text-slate-600">
+                  {managedUser.email}
+                </td>
+
+                <td className="px-4 py-4">
+                  <span
+                    className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                      managedUser.role === "admin"
+                        ? "bg-indigo-100 text-indigo-700"
+                        : "bg-slate-100 text-slate-600"
+                    }`}
+                  >
+                    {managedUser.role === "admin"
+                      ? "Admin"
+                      : "User"}
+                  </span>
+                </td>
+
+                <td className="px-4 py-4">
+                  {managedUser.id === user.id ? (
+                    <span className="text-xs text-slate-400">
+                      Current account
+                    </span>
+                  ) : (
+                    <div className="flex flex-wrap gap-2">
+
+<button
+  type="button"
+  onClick={async () => {
+    const newRole =
+      managedUser.role === "admin"
+        ? "user"
+        : "admin";
+
+    const confirmed = window.confirm(
+      `Change ${managedUser.name}'s role to ${newRole}?`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    const token = localStorage.getItem("access_token");
+
+    if (!token) {
+      window.location.href = "/";
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:8000/auth/users/${managedUser.id}/role?role=${newRole}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.detail || "Failed to update user role");
+        return;
+      }
+
+      alert("User role updated successfully!");
+
+      fetchAllUsers();
+    } catch (error) {
+      console.error("Role update error:", error);
+      alert("Unable to connect to server");
+    }
+  }}
+  className="px-3 py-2 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700"
+>
+  Change Role
+</button>
+
+<button
+  type="button"
+  onClick={async () => {
+    const confirmed = window.confirm(
+      `Are you sure you want to delete ${managedUser.name}?`
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    const token = localStorage.getItem("access_token");
+
+    if (!token) {
+      window.location.href = "/";
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:8000/auth/users/${managedUser.id}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.detail || "Failed to delete user");
+        return;
+      }
+
+      alert("User deleted successfully!");
+
+      fetchAllUsers();
+    } catch (error) {
+      console.error("Delete user error:", error);
+      alert("Unable to connect to server");
+    }
+  }}
+  className="px-3 py-2 rounded-lg bg-red-600 text-white text-xs font-semibold hover:bg-red-700"
+>
+  Delete
+</button>
+
+                    </div>
+                  )}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+
+  </div>
+)}
 </div>
 
 </main>
