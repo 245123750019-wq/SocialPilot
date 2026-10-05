@@ -17,6 +17,12 @@ from app.core.security import (
     get_oauth_data_from_state
 )
 from app.services.youtube_oauth import create_youtube_flow
+from app.services.x_oauth import (
+    generate_code_verifier,
+    create_x_authorization_url,
+    exchange_code_for_token,
+    get_x_user
+)
 
 
 router = APIRouter(
@@ -24,13 +30,82 @@ router = APIRouter(
     tags=["Social Accounts"]
 )
 
-
 def get_db():
     db = SessionLocal()
     try:
         yield db
     finally:
         db.close()
+@router.get("/x/connect")
+def connect_x(
+    user_id: int = Depends(get_current_user_id)
+):
+    code_verifier = generate_code_verifier()
+
+    oauth_state = create_oauth_state(
+    user_id=user_id,
+    code_verifier=code_verifier,
+    purpose="x_oauth"
+)
+
+    authorization_url = create_x_authorization_url(
+        state=oauth_state,
+        code_verifier=code_verifier
+    )
+
+    return {
+        "authorization_url": authorization_url
+    }
+@router.get("/x/callback")
+def x_callback(
+    code: str,
+    state: str,
+    db: Session = Depends(get_db)
+):
+    oauth_data = get_oauth_data_from_state(
+        state,
+        expected_purpose="x_oauth"
+    )
+
+    user_id = oauth_data["user_id"]
+    code_verifier = oauth_data["code_verifier"]
+
+    token_data = exchange_code_for_token(
+        code=code,
+        code_verifier=code_verifier
+    )
+
+    access_token = token_data.get("access_token")
+    refresh_token = token_data.get("refresh_token")
+
+    if not access_token:
+        raise HTTPException(
+            status_code=400,
+            detail="X did not return an access token"
+        )
+
+    x_user = get_x_user(access_token)
+
+    x_username = x_user["data"]["username"]
+
+    new_account = SocialAccount(
+        user_id=user_id,
+        platform="X",
+        username=x_username,
+        access_token=access_token,
+        refresh_token=refresh_token
+    )
+
+    db.add(new_account)
+    db.commit()
+    db.refresh(new_account)
+
+    return {
+        "message": "X account connected successfully",
+        "account_id": new_account.account_id
+    }
+
+
 @router.get("/youtube/connect")
 def connect_youtube(
     user_id: int = Depends(get_current_user_id)
@@ -60,17 +135,6 @@ def youtube_callback(
     state: str,
     db: Session = Depends(get_db)
 ):
-    oauth_data = get_oauth_data_from_state(state)
-
-    user_id = oauth_data["user_id"]
-    code_verifier = oauth_data["code_verifier"]
-
-    flow = create_youtube_flow(
-        code_verifier=code_verifier
-    )
-
-    flow.fetch_token(code=code)
-
     oauth_data = get_oauth_data_from_state(state)
 
     user_id = oauth_data["user_id"]

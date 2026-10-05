@@ -68,7 +68,7 @@ from app.models.user import User
 from app.database.database import SessionLocal
 
 
-def require_role(required_role_id: int):
+def require_role(required_role: str):
 
     def role_checker(
         user_id: int = Depends(get_current_user_id)
@@ -77,7 +77,7 @@ def require_role(required_role_id: int):
 
         try:
             user = db.query(User).filter(
-                User.id == user_id
+                User.user_id == user_id
             ).first()
 
             if not user:
@@ -86,7 +86,7 @@ def require_role(required_role_id: int):
                     detail="User not found"
                 )
 
-            if user.role_id != required_role_id:
+            if user.role != required_role:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail="Access denied"
@@ -100,13 +100,14 @@ def require_role(required_role_id: int):
     return role_checker
 def create_oauth_state(
     user_id: int,
-    code_verifier: str
+    code_verifier: str,
+    purpose: str = "youtube_oauth"
 ) -> str:
     expire = datetime.now(timezone.utc) + timedelta(minutes=10)
 
     payload = {
         "user_id": user_id,
-        "purpose": "youtube_oauth",
+        "purpose": purpose,
         "code_verifier": code_verifier,
         "exp": expire
     }
@@ -118,7 +119,10 @@ def create_oauth_state(
     )
 
 
-def get_oauth_data_from_state(state: str) -> dict:
+def get_oauth_data_from_state(
+    state: str,
+    expected_purpose: str = "youtube_oauth"
+) -> dict:
     try:
         payload = jwt.decode(
             state,
@@ -126,7 +130,7 @@ def get_oauth_data_from_state(state: str) -> dict:
             algorithms=[ALGORITHM]
         )
 
-        if payload.get("purpose") != "youtube_oauth":
+        if payload.get("purpose") != expected_purpose:
             raise ValueError("Invalid OAuth state")
 
         user_id = payload.get("user_id")
@@ -142,6 +146,6 @@ def get_oauth_data_from_state(state: str) -> dict:
 
     except (jwt.JWTError, ValueError):
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=400,
             detail="Invalid or expired OAuth state"
         )

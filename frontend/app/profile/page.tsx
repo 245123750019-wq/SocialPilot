@@ -12,6 +12,41 @@ interface User {
 export default function Profile() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
+  const connectYouTube = async () => {
+    const token = localStorage.getItem("access_token");
+
+    if (!token) {
+      window.location.href = "/";
+      return;
+    }
+
+    try {
+      const response = await fetch(
+        "http://127.0.0.1:8000/social-accounts/youtube/connect",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.detail || "Unable to connect YouTube.");
+        return;
+      }
+
+      if (data.authorization_url) {
+        window.location.href = data.authorization_url;
+      } else {
+        alert("YouTube authorization URL was not returned.");
+      }
+    } catch (error) {
+      console.error("YouTube connection error:", error);
+      alert("Unable to connect YouTube.");
+    }
+  };
 
   useEffect(() => {
     const token = localStorage.getItem("access_token");
@@ -183,6 +218,41 @@ export default function Profile() {
           </div>
 
         </div>
+        </div>
+
+{/* Social Accounts */}
+<div className="bg-white rounded-2xl shadow-sm border border-slate-200 mt-8 p-8">
+
+  <h3 className="text-xl font-bold text-slate-900">
+    Social Accounts
+  </h3>
+
+  <p className="text-slate-500 mt-2">
+    Connect your social media accounts to publish content.
+  </p>
+
+  <div className="mt-6 flex items-center justify-between bg-slate-50 rounded-xl p-5">
+
+    <div>
+      <p className="font-semibold text-slate-900">
+        YouTube
+      </p>
+
+      <p className="text-sm text-slate-500 mt-1">
+        Connect your YouTube channel for video publishing.
+      </p>
+    </div>
+
+    <button
+      onClick={connectYouTube}
+      className="px-5 py-2.5 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition"
+    >
+      Connect YouTube
+    </button>
+
+  </div>
+
+
 
       </div>
 

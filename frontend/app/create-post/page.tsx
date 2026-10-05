@@ -10,7 +10,12 @@ type ContentType =
   | "Story"
   | "Reel";
 
-type Platform = "Instagram" | "Facebook" | "X" | "LinkedIn";
+  type Platform =
+  | "Instagram"
+  | "Facebook"
+  | "X"
+  | "LinkedIn"
+  | "YouTube";
 interface Campaign {
   campaign_id: number;
   campaign_name: string;
@@ -197,15 +202,47 @@ export default function CreatePostPage() {
        * The UI uses "X", but the shared database uses
        * "Twitter-X" for the X platform.
        */
-      const backendPlatforms = platforms.map((platform) => {
-        if (platform === "X") {
-          return "Twitter-X";
-        }
-
-        return platform;
-      });
+      const backendPlatforms = platforms;
 
       const scheduledAt = `${date}T${time}:00`;
+
+      let mediaUrl: string | null = null;
+
+      if (
+          contentType === "Video" &&
+          mediaFiles.length > 0
+      ) {
+        const uploadData = new FormData();
+
+        uploadData.append(
+          "file",
+          mediaFiles[0]
+        );
+
+        const uploadResponse = await fetch(
+          "http://127.0.0.1:8000/uploads/video",
+          {
+              method: "POST",
+              headers: {
+              Authorization: `Bearer ${token}`,
+          },
+          body: uploadData,
+      }
+  );
+
+  const uploadResult =
+    await uploadResponse.json();
+
+  if (!uploadResponse.ok) {
+    alert(
+      uploadResult.detail ||
+        "Video upload failed."
+    );
+    return;
+  }
+
+  mediaUrl = uploadResult.file_path;
+}
 
       const requestBody = {
         content: content.trim(),
@@ -222,6 +259,7 @@ export default function CreatePostPage() {
             ? endDate
             : null,
         post_type: contentType,
+        media_url: mediaUrl,
         campaign_id: selectedCampaignId
           ? Number(selectedCampaignId)
           : null,
@@ -284,15 +322,15 @@ export default function CreatePostPage() {
       alert("Please enter some content before saving.");
       return;
     }
-  
+
     const token = localStorage.getItem("access_token");
-  
+
     if (!token) {
       alert("Please login first.");
       window.location.href = "/";
       return;
     }
-  
+
     try {
       const response = await fetch(
         "http://127.0.0.1:8000/posts/draft",
@@ -308,9 +346,9 @@ export default function CreatePostPage() {
           }),
         }
       );
-  
+
       const data = await response.json();
-  
+
       if (!response.ok) {
         alert(
           data.detail ||
@@ -318,15 +356,15 @@ export default function CreatePostPage() {
         );
         return;
       }
-  
+
       alert("Draft saved successfully!");
-  
+
       setContent("");
       setMediaFiles([]);
-  
+
     } catch (error) {
       console.error("Save draft error:", error);
-  
+
       alert(
         "Unable to connect to the backend server."
       );
@@ -358,7 +396,7 @@ export default function CreatePostPage() {
               href="/dashboard"
               className="text-sm text-blue-600 hover:text-blue-800"
             >
-              
+
             </a>
 
             <h1 className="mt-2 text-3xl font-bold text-gray-900">
@@ -528,6 +566,7 @@ export default function CreatePostPage() {
                     "Facebook",
                     "X",
                     "LinkedIn",
+                    "YouTube",
                   ] as Platform[]
                 ).map((platform) => (
 

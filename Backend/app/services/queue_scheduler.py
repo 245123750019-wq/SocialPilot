@@ -1,4 +1,4 @@
-from datetime import datetime, timezone
+from datetime import datetime
 
 from apscheduler.schedulers.background import BackgroundScheduler
 
@@ -14,7 +14,7 @@ def check_publishing_queue():
     db = SessionLocal()
 
     try:
-        now = datetime.now(timezone.utc)
+        now = datetime.now()
 
         queue_items = (
             db.query(PublishingQueue)

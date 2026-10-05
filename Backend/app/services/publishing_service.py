@@ -7,6 +7,8 @@ from app.models.publishing_log import PublishingLog
 from app.models.post import Post
 from app.models.social_account import SocialAccount
 from app.services.instagram_service import publish_instagram_image
+from app.services.x_service import publish_x_post
+from app.services.youtube_service import publish_youtube_video
 
 
 def process_queue_item(queue_id: int):
@@ -114,6 +116,78 @@ def process_queue_item(queue_id: int):
 
             print(
                 "Instagram publishing result:",
+                result
+            )
+
+        elif queue_item.platform == "X":
+
+            social_account = (
+                db.query(SocialAccount)
+                .filter(
+                    SocialAccount.account_id == post.account_id
+                )
+                .first()
+            )
+
+            if not social_account:
+                raise Exception(
+                    "X social account not found."
+                )
+
+            if not social_account.access_token:
+                raise Exception(
+                    "X access token is not configured."
+                )
+
+            result = publish_x_post(
+                access_token=social_account.access_token,
+                text=post.content
+            )
+
+            print(
+                "X publishing result:",
+                result
+            )
+        elif queue_item.platform == "YouTube":
+
+            social_account = (
+                db.query(SocialAccount)
+                .filter(
+                    SocialAccount.account_id == post.account_id
+                )
+                .first()
+            )
+
+            if not social_account:
+                raise Exception(
+                    "YouTube social account not found."
+                )
+
+            if not social_account.access_token:
+                raise Exception(
+                    "YouTube access token is not configured."
+                )
+
+            if not social_account.refresh_token:
+                raise Exception(
+                    "YouTube refresh token is not configured."
+                )
+
+            if not post.media_url:
+                raise Exception(
+                    "YouTube video file is missing."
+                )
+
+            result = publish_youtube_video(
+                access_token=social_account.access_token,
+                refresh_token=social_account.refresh_token,
+                video_path=post.media_url,
+                title=post.content,
+                description=post.content
+            )
+
+            print(
+                "YouTube publishing result:",
                 result
             )
 

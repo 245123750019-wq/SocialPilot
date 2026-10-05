@@ -2,6 +2,7 @@ from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from datetime import datetime, timezone
+import os
 
 from app.database.database import SessionLocal
 from app.models.user import User
@@ -10,7 +11,8 @@ from app.core.security import (
     hash_password,
     verify_password,
     create_access_token,
-    get_current_user_id
+    get_current_user_id,
+    require_role
 )
 
 
@@ -30,6 +32,8 @@ def get_db():
 
 # ---------------- REGISTER ----------------
 
+# ---------------- REGISTER ----------------
+
 @router.post("/register")
 def register(
     user_data: RegisterRequest,
@@ -45,10 +49,23 @@ def register(
             detail="Email already registered"
         )
 
+    # Determine account role
+    role = "user"
+
+    if user_data.role == "admin":
+        if user_data.admin_code != os.getenv("ADMIN_REGISTRATION_CODE"):
+            raise HTTPException(
+                status_code=403,
+                detail="Invalid admin authorization code"
+            )
+
+        role = "admin"
+
     new_user = User(
         name=user_data.name,
         email=user_data.email,
         password=hash_password(user_data.password),
+        role=role,
         created_at=datetime.now(timezone.utc)
     )
 
@@ -57,8 +74,9 @@ def register(
     db.refresh(new_user)
 
     return {
-        "message": "User registered successfully",
-        "user_id": new_user.user_id
+        "message": f"{role.capitalize()} registered successfully",
+        "user_id": new_user.user_id,
+        "role": new_user.role
     }
 
 
@@ -89,10 +107,11 @@ def login(
         )
 
     access_token = create_access_token(
-        data={
-            "user_id": user.user_id
-        }
-    )
+    data={
+        "user_id": user.user_id,
+        "role": user.role
+    }
+)
 
     return {
         "access_token": access_token,
@@ -118,7 +137,17 @@ def get_me(
         )
 
     return {
-        "id": user.user_id,
-        "name": user.name,
-        "email": user.email
+    "id": user.user_id,
+    "name": user.name,
+    "email": user.email,
+    "role": user.role
+}
+@router.get("/admin-test")
+def admin_test(
+    admin_user: User = Depends(require_role("admin"))
+):
+    return {
+        "message": "Admin access successful",
+        "user_id": admin_user.user_id,
+        "role": admin_user.role
     }

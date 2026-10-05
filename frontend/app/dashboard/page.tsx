@@ -17,6 +17,7 @@ interface User {
   id: number;
   name: string;
   email: string;
+  role: "user" | "admin";
 }
 
 interface SocialAccount {
@@ -440,6 +441,9 @@ const instagramAccount =
           <h2 className="text-3xl font-bold text-slate-900">
             Welcome, {user.name}! 👋
           </h2>
+          <p className="text-sm text-indigo-600 font-medium mt-2">
+            Account type: {user.role === "admin" ? "Administrator" : "User"}
+          </p>
 
           <p className="text-slate-500 mt-2">
             Manage your social media accounts from one place.

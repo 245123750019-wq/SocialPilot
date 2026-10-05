@@ -6,6 +6,8 @@ export default function Register() {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [accountType, setAccountType] = useState<"user" | "admin">("user");
+  const [adminCode, setAdminCode] = useState("");
   const [loading, setLoading] = useState(false);
 
   const handleRegister = async (e: React.FormEvent) => {
@@ -25,7 +27,8 @@ export default function Register() {
             name,
             email,
             password,
-            role_id: 2,
+            role: accountType,
+            admin_code: accountType === "admin" ? adminCode : null,
           }),
         }
       );
@@ -144,29 +147,69 @@ export default function Register() {
 
             </div>
 
-            {/* Role */}
-            <div>
+            {/* Account type */}
+<div>
 
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
-                Account type
-              </label>
+<label className="block text-sm font-semibold text-gray-700 mb-2">
+  Account type
+</label>
 
-              <select
-                className="w-full px-4 py-3.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 outline-none"
-                value="2"
-                disabled
-              >
-                <option value="2">
-                  Team Member
-                </option>
-              </select>
+<div className="grid grid-cols-2 gap-3">
 
-              <p className="text-xs text-gray-400 mt-2">
-                New accounts are registered as Team Members.
-              </p>
+  <button
+    type="button"
+    onClick={() => setAccountType("user")}
+    className={`py-3.5 rounded-xl border font-semibold transition ${
+      accountType === "user"
+        ? "border-indigo-500 bg-indigo-50 text-indigo-600"
+        : "border-gray-200 bg-gray-50 text-gray-600"
+    }`}
+  >
+    User
+  </button>
 
-            </div>
+  <button
+    type="button"
+    onClick={() => setAccountType("admin")}
+    className={`py-3.5 rounded-xl border font-semibold transition ${
+      accountType === "admin"
+        ? "border-indigo-500 bg-indigo-50 text-indigo-600"
+        : "border-gray-200 bg-gray-50 text-gray-600"
+    }`}
+  >
+    Admin
+  </button>
 
+</div>
+
+<p className="text-xs text-gray-400 mt-2">
+  Select the type of account you want to create.
+</p>
+
+</div>
+{/* Admin authorization code */}
+{accountType === "admin" && (
+  <div>
+
+    <label className="block text-sm font-semibold text-gray-700 mb-2">
+      Admin authorization code
+    </label>
+
+    <input
+      type="password"
+      value={adminCode}
+      onChange={(e) => setAdminCode(e.target.value)}
+      placeholder="Enter admin authorization code"
+      className="w-full px-4 py-3.5 rounded-xl border border-gray-200 bg-gray-50 text-gray-900 outline-none transition focus:border-indigo-500 focus:ring-2 focus:ring-indigo-100"
+      required
+    />
+
+    <p className="text-xs text-gray-400 mt-2">
+      Authorization is required to create an Admin account.
+    </p>
+
+  </div>
+)}
             {/* Register button */}
             <button
               type="submit"

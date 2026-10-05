@@ -5,6 +5,7 @@ import { useState } from "react";
 export default function Home() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [loginRole, setLoginRole] = useState<"user" | "admin">("user");
   const [loading, setLoading] = useState(false);
 
   const handleLogin = async (e: React.FormEvent) => {
@@ -38,6 +39,34 @@ export default function Home() {
 
       localStorage.setItem("access_token", data.access_token);
 
+      const meResponse = await fetch(
+        "http://127.0.0.1:8000/auth/me",
+        {
+          headers: {
+            Authorization: `Bearer ${data.access_token}`,
+          },
+        }
+      );
+
+      if (!meResponse.ok) {
+          alert("Unable to load user information");
+          return;
+      }
+
+      const user = await meResponse.json();
+
+      if (user.role !== loginRole) {
+        alert(
+          `This account is registered as ${user.role === "admin" ? "Admin" : "User"}. Please select the correct account type.`
+        );
+        return;
+      }
+
+      localStorage.setItem("user_role", user.role);
+      localStorage.setItem("user_id", String(user.id));
+      localStorage.setItem("user_name", user.name);
+
+
       window.location.href = "/dashboard";
     } catch (error) {
       console.error("Login error:", error);
@@ -49,7 +78,7 @@ export default function Home() {
 
   return (
     <main className="min-h-screen bg-gradient-to-br from-blue-600 via-cyan-600 to-teal-600 flex items-center justify-center px-6 py-12">
-      
+
       <div className="w-full max-w-md">
 
         {/* Logo / Brand */}
@@ -124,6 +153,38 @@ export default function Home() {
                 required
               />
             </div>
+            {/* Account type */}
+<div>
+  <label className="block text-sm font-semibold text-gray-700 mb-2">
+    Login as
+  </label>
+
+  <div className="grid grid-cols-2 gap-3">
+    <button
+      type="button"
+      onClick={() => setLoginRole("user")}
+      className={`py-3 rounded-xl border font-medium transition ${
+        loginRole === "user"
+          ? "border-indigo-500 bg-indigo-50 text-indigo-700"
+          : "border-gray-200 bg-gray-50 text-gray-600 hover:border-gray-300"
+      }`}
+    >
+      User
+    </button>
+
+    <button
+      type="button"
+      onClick={() => setLoginRole("admin")}
+      className={`py-3 rounded-xl border font-medium transition ${
+        loginRole === "admin"
+          ? "border-indigo-500 bg-indigo-50 text-indigo-700"
+          : "border-gray-200 bg-gray-50 text-gray-600 hover:border-gray-300"
+      }`}
+    >
+      Admin
+    </button>
+  </div>
+</div>
 
             {/* Login button */}
             <button
