@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 
 type ContentType =
@@ -23,7 +23,7 @@ interface Campaign {
   status: string | null;
 }
 
-export default function CreatePostPage() {
+function CreatePostPageContent() {
   // ==================== CONTENT ====================
   const searchParams = useSearchParams();
   const draftId = searchParams.get("draft_id");
@@ -1083,5 +1083,12 @@ export default function CreatePostPage() {
       </div>
 
     </main>
+  );
+}
+export default function CreatePostPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <CreatePostPageContent />
+    </Suspense>
   );
 }
