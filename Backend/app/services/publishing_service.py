@@ -6,6 +6,7 @@ from app.models.publishing_queue import PublishingQueue
 from app.models.publishing_log import PublishingLog
 from app.models.post import Post
 from app.models.social_account import SocialAccount
+
 from app.services.instagram_service import publish_instagram_image
 from app.services.x_service import publish_x_post
 from app.services.youtube_service import publish_youtube_video
@@ -14,10 +15,6 @@ from app.services.youtube_service import publish_youtube_video
 def process_queue_item(queue_id: int):
     """
     Process one publishing queue item in the background.
-
-    For the current Milestone 2 implementation, this simulates
-    successful publishing. Real social-media API publishing can
-    be connected later.
     """
 
     db = SessionLocal()
@@ -69,9 +66,9 @@ def process_queue_item(queue_id: int):
 
         db.commit()
 
-        # --------------------------------------------------
-        # SOCIAL MEDIA API PUBLISHING
-        # --------------------------------------------------
+        # ==================================================
+        # INSTAGRAM
+        # ==================================================
 
         if queue_item.platform == "Instagram":
 
@@ -119,6 +116,10 @@ def process_queue_item(queue_id: int):
                 result
             )
 
+        # ==================================================
+        # X
+        # ==================================================
+
         elif queue_item.platform == "X":
 
             social_account = (
@@ -148,6 +149,11 @@ def process_queue_item(queue_id: int):
                 "X publishing result:",
                 result
             )
+
+        # ==================================================
+        # YOUTUBE
+        # ==================================================
+
         elif queue_item.platform == "YouTube":
 
             social_account = (
@@ -178,10 +184,46 @@ def process_queue_item(queue_id: int):
                     "YouTube video file is missing."
                 )
 
+            # --------------------------------------------------
+            # Convert stored upload path to local filesystem path
+            # --------------------------------------------------
+
+            video_path = post.media_url
+
+            # If the database contains a relative upload path,
+            # convert it to Backend/uploads/...
+            if not os.path.isabs(video_path):
+
+                backend_dir = os.path.abspath(
+                    os.path.join(
+                        os.path.dirname(__file__),
+                        "..",
+                        ".."
+                    )
+                )
+
+                video_path = os.path.join(
+                    backend_dir,
+                    video_path
+                )
+
+            # Normalize the path.
+            video_path = os.path.abspath(video_path)
+
+            print(
+                "YouTube video path:",
+                video_path
+            )
+
+            if not os.path.exists(video_path):
+                raise Exception(
+                    f"YouTube video file was not found: {video_path}"
+                )
+
             result = publish_youtube_video(
                 access_token=social_account.access_token,
                 refresh_token=social_account.refresh_token,
-                video_path=post.media_url,
+                video_path=video_path,
                 title=post.content,
                 description=post.content
             )
@@ -195,6 +237,10 @@ def process_queue_item(queue_id: int):
 
             # Other platforms remain simulated for now.
             pass
+
+        # ==================================================
+        # MARK AS PUBLISHED
+        # ==================================================
 
         published_time = datetime.now(timezone.utc)
 

@@ -155,7 +155,7 @@ export default function CalendarPage() {
   };
 
   return (
-    <main className="min-h-screen bg-gray-100 p-8 text-gray-900">
+    <main className="min-h-screen bg-gray-100 p-3 sm:p-5 lg:p-8 text-gray-900 overflow-x-hidden">
 
       <div className="mx-auto max-w-6xl">
 
@@ -208,28 +208,28 @@ export default function CalendarPage() {
 
           /* ==================== CALENDAR ==================== */
 
-          <section className="rounded-lg bg-white p-6 shadow">
+          <section className="rounded-lg bg-white p-2 sm:p-4 lg:p-6 shadow overflow-hidden">
 
             {/* Calendar Header */}
 
-            <div className="mb-6 flex items-center justify-between">
+            <div className="mb-4 flex items-center justify-between gap-2">
 
               <button
                 type="button"
                 onClick={goToPreviousMonth}
-                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 hover:bg-gray-100"
+                className="shrink-0 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 hover:bg-gray-100 sm:px-4"
               >
                 ←
               </button>
 
-              <h2 className="text-2xl font-semibold text-gray-900">
+              <h2 className="min-w-0 text-center text-lg font-semibold text-gray-900 sm:text-2xl">
                 {monthName} {year}
               </h2>
 
               <button
                 type="button"
                 onClick={goToNextMonth}
-                className="rounded-lg border border-gray-300 bg-white px-4 py-2 text-gray-900 hover:bg-gray-100"
+                className="shrink-0 rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 hover:bg-gray-100 sm:px-4"
               >
                 →
               </button>
@@ -252,7 +252,7 @@ export default function CalendarPage() {
 
                 <div
                   key={day}
-                  className="p-3 text-center font-semibold text-gray-700"
+                  className="px-0 py-2 text-center text-[10px] font-semibold text-gray-700 sm:p-3 sm:text-sm"
                 >
                   {day}
                 </div>
@@ -273,7 +273,7 @@ export default function CalendarPage() {
 
                 <div
                   key={`empty-${index}`}
-                  className="min-h-32 border-b border-r border-gray-200 bg-gray-50"
+                  className="min-h-16 border-b border-r border-gray-200 bg-gray-50 sm:min-h-24 lg:min-h-32"
                 />
 
               ))}
@@ -311,7 +311,7 @@ export default function CalendarPage() {
                         dateString
                       )
                     }
-                    className={`min-h-32 border-b border-r border-gray-200 p-2 text-left align-top transition ${
+                    className={`min-h-16 border-b border-r border-gray-200 p-1 text-left align-top transition sm:min-h-24 sm:p-2 lg:min-h-32 ${
                       isSelected
                         ? "bg-blue-50"
                         : "bg-white hover:bg-gray-50"
@@ -338,14 +338,14 @@ export default function CalendarPage() {
 
                         <div
                           key={post.id}
-                          className="rounded bg-blue-100 p-2 text-xs text-blue-800"
+                          className="rounded bg-blue-100 p-1 text-[9px] leading-tight text-blue-800 sm:p-2 sm:text-xs"
                         >
 
-                          <p className="font-semibold">
+                          <p className="font-semibold truncate">
                             {post.time}
                           </p>
 
-                          <p className="mt-1 line-clamp-2">
+                          <p className="mt-1 line-clamp-2 break-words">
                             {post.content}
                           </p>
 

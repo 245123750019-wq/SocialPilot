@@ -1,0 +1,17 @@
+fastapi
+uvicorn[standard]
+sqlalchemy
+psycopg2-binary
+alembic
+python-jose
+passlib
+python-multipart
+python-dotenv
+requests
+httpx
+apscheduler
+google-auth
+google-auth-oauthlib
+google-api-python-client
+email-validator
+bcrypt

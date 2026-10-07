@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime
+from sqlalchemy import Column, Integer, String, DateTime, Boolean
 from app.database.database import Base
 
 
@@ -10,4 +10,5 @@ class User(Base):
     email = Column(String(150), unique=True, nullable=False)
     password = Column(String(255), nullable=False)
     role = Column(String(20), nullable=False, default="user")
+    is_active = Column(Boolean, nullable=False, default=True)
     created_at = Column(DateTime, nullable=True)

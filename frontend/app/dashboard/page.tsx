@@ -18,6 +18,8 @@ interface User {
   name: string;
   email: string;
   role: "user" | "admin";
+  is_active: boolean;
+  created_at?: string;
 }
 
 interface SocialAccount {
@@ -325,6 +327,57 @@ const instagramAccount =
       setAdminUsersLoading(false);
     }
   };
+  const updateUserStatus = async (
+    userId: number,
+    isActive: boolean
+  ) => {
+    const token = localStorage.getItem("access_token");
+  
+    if (!token) return;
+  
+    try {
+      const response = await fetch(
+        `http://127.0.0.1:8000/auth/users/${userId}/status?is_active=${isActive}`,
+        {
+          method: "PUT",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
+  
+      if (!response.ok) {
+        const errorData = await response.json();
+  
+        alert(
+          errorData.detail ||
+          "Failed to update user status."
+        );
+  
+        return;
+      }
+  
+      setAllUsers((currentUsers) =>
+        currentUsers.map((managedUser) =>
+          managedUser.id === userId
+            ? {
+                ...managedUser,
+                is_active: isActive
+              }
+            : managedUser
+        )
+      );
+  
+    } catch (error) {
+      console.error(
+        "Error updating user status:",
+        error
+      );
+  
+      alert("Unable to connect to server.");
+    }
+  };
+  
   useEffect(() => {
     if (user?.role === "admin" && activeTab === "admin") {
       fetchAllUsers();
@@ -487,7 +540,7 @@ const instagramAccount =
 
       {/* ==================== MAIN CONTENT ==================== */}
 
-      <div className="max-w-7xl mx-auto px-8 py-10">
+      <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10 min-w-0">
 
         {/* Welcome */}
         <div className="mb-8">
@@ -496,7 +549,7 @@ const instagramAccount =
             Dashboard
           </p>
 
-          <h2 className="text-3xl font-bold text-slate-900">
+          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 break-words">
             Welcome, {user.name}! 👋
           </h2>
           <p className="text-sm text-indigo-600 font-medium mt-2">
@@ -510,8 +563,8 @@ const instagramAccount =
         </div>
         {/* ==================== DASHBOARD TABS ==================== */}
 
-<div className="mb-8 bg-white rounded-2xl border border-slate-200 shadow-sm p-2">
-  <div className="flex flex-wrap gap-2">
+        <div className="mb-8 bg-white rounded-2xl border border-slate-200 shadow-sm p-2 w-full overflow-hidden">
+          <div className="flex flex-wrap gap-2">
 
   {[
   { id: "overview", label: "Overview", icon: "📊" },
@@ -536,7 +589,7 @@ const instagramAccount =
               | "admin"
           )
         }
-        className={`flex items-center gap-2 px-5 py-3 rounded-xl text-sm font-semibold transition ${
+        className={`flex items-center justify-center gap-2 px-3 sm:px-5 py-3 rounded-xl text-xs sm:text-sm font-semibold transition ${
           activeTab === tab.id
             ? "bg-indigo-600 text-white shadow-sm"
             : "text-slate-600 hover:bg-indigo-50 hover:text-indigo-600"
@@ -563,81 +616,82 @@ const instagramAccount =
   <div className="space-y-8">
 
     {/* Key Metrics */}
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
 
-      {/* Engagement */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-        <p className="text-sm font-medium text-slate-500">
-          Engagement
-        </p>
+{/* Engagement */}
+<div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">
+  <p className="text-sm font-medium text-slate-500">
+    Engagement
+  </p>
 
-        <p className="text-3xl font-bold text-slate-900 mt-2">
-          {campaignAnalytics
-            ? Number(campaignAnalytics.total_likes || 0) +
-              Number(campaignAnalytics.total_comments || 0) +
-              Number(campaignAnalytics.total_shares || 0)
-            : 0}
-        </p>
+  <p className="text-2xl sm:text-3xl font-bold text-slate-900 mt-2">
+    {campaignAnalytics
+      ? Number(campaignAnalytics.total_likes || 0) +
+        Number(campaignAnalytics.total_comments || 0) +
+        Number(campaignAnalytics.total_shares || 0)
+      : 0}
+  </p>
 
-        <p className="text-xs text-slate-400 mt-2">
-          Likes + comments + shares
-        </p>
-      </div>
+  <p className="text-xs text-slate-400 mt-2">
+    Likes + comments + shares
+  </p>
+</div>
 
-      {/* Reach */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-        <p className="text-sm font-medium text-slate-500">
-          Reach
-        </p>
+{/* Reach */}
+<div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">
+  <p className="text-sm font-medium text-slate-500">
+    Reach
+  </p>
 
-        <p className="text-3xl font-bold text-slate-900 mt-2">
-          {campaignAnalytics
-            ? Number(campaignAnalytics.total_reach || 0)
-            : 0}
-        </p>
+  <p className="text-2xl sm:text-3xl font-bold text-slate-900 mt-2">
+    {campaignAnalytics
+      ? Number(campaignAnalytics.total_reach || 0)
+      : 0}
+  </p>
 
-        <p className="text-xs text-slate-400 mt-2">
-          Total users reached
-        </p>
-      </div>
+  <p className="text-xs text-slate-400 mt-2">
+    Total users reached
+  </p>
+</div>
 
-      {/* Impressions */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-        <p className="text-sm font-medium text-slate-500">
-          Impressions
-        </p>
+{/* Impressions */}
+<div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">
+  <p className="text-sm font-medium text-slate-500">
+    Impressions
+  </p>
 
-        <p className="text-3xl font-bold text-slate-900 mt-2">
-          {campaignAnalytics
-            ? Number(campaignAnalytics.total_impressions || 0)
-            : 0}
-        </p>
+  <p className="text-2xl sm:text-3xl font-bold text-slate-900 mt-2">
+    {campaignAnalytics
+      ? Number(campaignAnalytics.total_impressions || 0)
+      : 0}
+  </p>
 
-        <p className="text-xs text-slate-400 mt-2">
-          Total content views
-        </p>
-      </div>
+  <p className="text-xs text-slate-400 mt-2">
+    Total content views
+  </p>
+</div>
 
-      {/* Clicks */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-6">
-        <p className="text-sm font-medium text-slate-500">
-          Clicks
-        </p>
+{/* Clicks */}
+<div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">
+  <p className="text-sm font-medium text-slate-500">
+    Clicks
+  </p>
 
-        <p className="text-3xl font-bold text-slate-900 mt-2">
-          {campaignAnalytics
-            ? Number(campaignAnalytics.total_clicks || 0)
-            : 0}
-        </p>
+  <p className="text-2xl sm:text-3xl font-bold text-slate-900 mt-2">
+    {campaignAnalytics
+      ? Number(campaignAnalytics.total_clicks || 0)
+      : 0}
+  </p>
 
-        <p className="text-xs text-slate-400 mt-2">
-          Total link clicks
-        </p>
-      </div>
+  <p className="text-xs text-slate-400 mt-2">
+    Total link clicks
+  </p>
+</div>
 
-    </div>
-          {/* Engagement Overview */}
-          <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
+</div>
+
+{/* Engagement Overview */}
+<div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-8 overflow-hidden">
 
 <div className="mb-6">
   <h2 className="text-xl font-bold text-slate-900">
@@ -650,7 +704,7 @@ const instagramAccount =
 </div>
 
 {engagementChartData.length > 0 ? (
-  <div className="h-80">
+  <div className="h-64 sm:h-80 w-full min-w-0">
 
     <ResponsiveContainer width="100%" height="100%">
       <BarChart data={engagementChartData}>
@@ -660,10 +714,11 @@ const instagramAccount =
         <XAxis dataKey="metric" />
 
         <YAxis />
+
         <Tooltip
-            formatter={(value, name) => [value, String(name)]}
-            labelFormatter={(label) => String(label)}
-          />
+          formatter={(value, name) => [value, String(name)]}
+          labelFormatter={(label) => String(label)}
+        />
 
         <Bar
           dataKey="value"
@@ -676,13 +731,12 @@ const instagramAccount =
 
   </div>
 ) : (
-  <div className="h-80 flex items-center justify-center text-slate-500">
+  <div className="h-64 sm:h-80 flex items-center justify-center text-slate-500">
     No engagement data available.
   </div>
 )}
 
 </div>
-
     {/* Audience Growth */}
     <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
 
@@ -1430,175 +1484,386 @@ const instagramAccount =
         No users found.
       </p>
     ) : (
-      <div className="overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-slate-200 text-left">
-              <th className="px-4 py-3 font-semibold text-slate-600">
-                Name
-              </th>
+      <>
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
 
-              <th className="px-4 py-3 font-semibold text-slate-600">
-                Email
-              </th>
+          <div className="rounded-xl bg-slate-50 border border-slate-200 p-5">
+            <p className="text-sm text-slate-500">
+                Total Users
+            </p>
 
-              <th className="px-4 py-3 font-semibold text-slate-600">
-                Role
-              </th>
-
-              <th className="px-4 py-3 font-semibold text-slate-600">
-                Actions
-              </th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {allUsers.map((managedUser) => (
-              <tr
-                key={managedUser.id}
-                className="border-b border-slate-100"
-              >
-                <td className="px-4 py-4 font-medium text-slate-900">
-                  {managedUser.name}
-                </td>
-
-                <td className="px-4 py-4 text-slate-600">
-                  {managedUser.email}
-                </td>
-
-                <td className="px-4 py-4">
-                  <span
-                    className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                      managedUser.role === "admin"
-                        ? "bg-indigo-100 text-indigo-700"
-                        : "bg-slate-100 text-slate-600"
-                    }`}
-                  >
-                    {managedUser.role === "admin"
-                      ? "Admin"
-                      : "User"}
-                  </span>
-                </td>
-
-                <td className="px-4 py-4">
-                  {managedUser.id === user.id ? (
-                    <span className="text-xs text-slate-400">
-                      Current account
-                    </span>
-                  ) : (
-                    <div className="flex flex-wrap gap-2">
-
-<button
-  type="button"
-  onClick={async () => {
-    const newRole =
-      managedUser.role === "admin"
-        ? "user"
-        : "admin";
-
-    const confirmed = window.confirm(
-      `Change ${managedUser.name}'s role to ${newRole}?`
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    const token = localStorage.getItem("access_token");
-
-    if (!token) {
-      window.location.href = "/";
-      return;
-    }
-
-    try {
-      const response = await fetch(
-        `http://127.0.0.1:8000/auth/users/${managedUser.id}/role?role=${newRole}`,
-        {
-          method: "PUT",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        alert(data.detail || "Failed to update user role");
-        return;
-      }
-
-      alert("User role updated successfully!");
-
-      fetchAllUsers();
-    } catch (error) {
-      console.error("Role update error:", error);
-      alert("Unable to connect to server");
-    }
-  }}
-  className="px-3 py-2 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700"
->
-  Change Role
-</button>
-
-<button
-  type="button"
-  onClick={async () => {
-    const confirmed = window.confirm(
-      `Are you sure you want to delete ${managedUser.name}?`
-    );
-
-    if (!confirmed) {
-      return;
-    }
-
-    const token = localStorage.getItem("access_token");
-
-    if (!token) {
-      window.location.href = "/";
-      return;
-    }
-
-    try {
-      const response = await fetch(
-        `http://127.0.0.1:8000/auth/users/${managedUser.id}`,
-        {
-          method: "DELETE",
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        alert(data.detail || "Failed to delete user");
-        return;
-      }
-
-      alert("User deleted successfully!");
-
-      fetchAllUsers();
-    } catch (error) {
-      console.error("Delete user error:", error);
-      alert("Unable to connect to server");
-    }
-  }}
-  className="px-3 py-2 rounded-lg bg-red-600 text-white text-xs font-semibold hover:bg-red-700"
->
-  Delete
-</button>
-
-                    </div>
-                  )}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
+            <p className="text-3xl font-bold text-slate-900 mt-2">
+              {allUsers.length}
+            </p>
       </div>
+
+      <div className="rounded-xl bg-slate-50 border border-slate-200 p-5">
+        <p className="text-sm text-slate-500">
+          Normal Users
+        </p>
+
+        <p className="text-3xl font-bold text-slate-900 mt-2">
+          {
+            allUsers.filter(
+              (managedUser) => managedUser.role === "user"
+            ).length
+          }
+        </p>
+      </div>
+
+      <div className="rounded-xl bg-indigo-50 border border-indigo-100 p-5">
+        <p className="text-sm text-indigo-600">
+          Administrators
+        </p>
+
+        <p className="text-3xl font-bold text-indigo-700 mt-2">
+          {
+            allUsers.filter(
+              (managedUser) => managedUser.role === "admin"
+            ).length
+          }
+    </p>
+  </div>
+
+</div>
+<div className="mb-8">
+  <div className="flex items-center justify-between mb-4">
+    <div>
+      <h3 className="text-lg font-bold text-slate-900">
+        Recent Users
+      </h3>
+
+      <p className="text-sm text-slate-500 mt-1">
+        Recently registered accounts.
+      </p>
+    </div>
+  </div>
+
+  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    {[...allUsers]
+      .sort((a, b) => {
+        const dateA = a.created_at
+          ? new Date(a.created_at).getTime()
+          : 0;
+
+        const dateB = b.created_at
+          ? new Date(b.created_at).getTime()
+          : 0;
+
+        return dateB - dateA;
+      })
+      .slice(0, 5)
+      .map((recentUser) => (
+        <div
+          key={recentUser.id}
+          className="flex items-center justify-between rounded-xl border border-slate-200 p-4"
+        >
+          <div>
+            <p className="font-semibold text-slate-900">
+              {recentUser.name}
+            </p>
+
+            <p className="text-sm text-slate-500 mt-1">
+              {recentUser.email}
+            </p>
+          </div>
+
+          <span
+            className={`px-3 py-1 rounded-full text-xs font-semibold ${
+              recentUser.role === "admin"
+                ? "bg-indigo-100 text-indigo-700"
+                : "bg-slate-100 text-slate-600"
+            }`}
+          >
+            {recentUser.role === "admin"
+              ? "Admin"
+              : "User"}
+          </span>
+        </div>
+      ))}
+  </div>
+</div>
+<div className="overflow-x-auto">
+  <table className="w-full text-sm">
+    <thead>
+      <tr className="border-b border-slate-200 text-left">
+
+        <th className="px-4 py-3 font-semibold text-slate-600">
+          Name
+        </th>
+
+        <th className="px-4 py-3 font-semibold text-slate-600">
+          Email
+        </th>
+
+        <th className="px-4 py-3 font-semibold text-slate-600">
+          Role
+        </th>
+
+        <th className="px-4 py-3 font-semibold text-slate-600">
+          Registered
+        </th>
+
+        <th className="px-4 py-3 font-semibold text-slate-600">
+          Status
+        </th>
+
+        <th className="px-4 py-3 font-semibold text-slate-600">
+          Actions
+        </th>
+
+      </tr>
+    </thead>
+
+    <tbody>
+      {allUsers.map((managedUser) => (
+        <tr
+          key={managedUser.id}
+          className="border-b border-slate-100"
+        >
+
+          {/* Name */}
+          <td className="px-4 py-4 font-medium text-slate-900">
+            {managedUser.name}
+          </td>
+
+          {/* Email */}
+          <td className="px-4 py-4 text-slate-600">
+            {managedUser.email}
+          </td>
+
+          {/* Role */}
+          <td className="px-4 py-4">
+            <span
+              className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                managedUser.role === "admin"
+                  ? "bg-indigo-100 text-indigo-700"
+                  : "bg-slate-100 text-slate-600"
+              }`}
+            >
+              {managedUser.role === "admin"
+                ? "Admin"
+                : "User"}
+            </span>
+          </td>
+
+          {/* Registered */}
+          <td className="px-4 py-4 text-slate-600">
+            {managedUser.created_at
+              ? new Date(
+                  managedUser.created_at
+                ).toLocaleDateString(
+                  "en-IN",
+                  {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric",
+                  }
+                )
+              : "—"}
+          </td>
+
+          {/* Status */}
+          <td className="px-4 py-4">
+            <span
+              className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                managedUser.is_active
+                  ? "bg-green-100 text-green-700"
+                  : "bg-red-100 text-red-700"
+              }`}
+            >
+              {managedUser.is_active
+                ? "Active"
+                : "Inactive"}
+            </span>
+          </td>
+
+          {/* Actions */}
+          <td className="px-4 py-4">
+            {managedUser.id === user.id ? (
+              <span className="text-xs text-slate-400">
+                Current account
+              </span>
+            ) : (
+              <div className="flex flex-wrap gap-2">
+
+                {/* Activate / Deactivate */}
+                <button
+                  type="button"
+                  onClick={() => {
+                    const action = managedUser.is_active
+                      ? "deactivate"
+                      : "activate";
+
+                    const confirmed = window.confirm(
+                      `Are you sure you want to ${action} ${managedUser.name}'s account?`
+                    );
+
+                    if (!confirmed) {
+                      return;
+                    }
+
+                    updateUserStatus(
+                      managedUser.id,
+                      !managedUser.is_active
+                    );
+                  }}
+                  className={`px-3 py-2 rounded-lg text-white text-xs font-semibold ${
+                    managedUser.is_active
+                      ? "bg-orange-500 hover:bg-orange-600"
+                      : "bg-green-600 hover:bg-green-700"
+                  }`}
+                >
+                  {managedUser.is_active
+                    ? "Deactivate"
+                    : "Activate"}
+                </button>
+
+                {/* Change Role */}
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const newRole =
+                      managedUser.role === "admin"
+                        ? "user"
+                        : "admin";
+
+                    const confirmed = window.confirm(
+                      `Change ${managedUser.name}'s role to ${newRole}?`
+                    );
+
+                    if (!confirmed) {
+                      return;
+                    }
+
+                    const token =
+                      localStorage.getItem(
+                        "access_token"
+                      );
+
+                    if (!token) {
+                      window.location.href = "/";
+                      return;
+                    }
+
+                    try {
+                      const response = await fetch(
+                        `http://127.0.0.1:8000/auth/users/${managedUser.id}/role?role=${newRole}`,
+                        {
+                          method: "PUT",
+                          headers: {
+                            Authorization: `Bearer ${token}`,
+                          },
+                        }
+                      );
+
+                      const data =
+                        await response.json();
+
+                      if (!response.ok) {
+                        alert(
+                          data.detail ||
+                            "Failed to update user role"
+                        );
+                        return;
+                      }
+
+                      alert(
+                        "User role updated successfully!"
+                      );
+
+                      fetchAllUsers();
+                    } catch (error) {
+                      console.error(
+                        "Role update error:",
+                        error
+                      );
+
+                      alert(
+                        "Unable to connect to server"
+                      );
+                    }
+                  }}
+                  className="px-3 py-2 rounded-lg bg-indigo-600 text-white text-xs font-semibold hover:bg-indigo-700"
+                >
+                  Change Role
+                </button>
+
+                {/* Delete */}
+                <button
+                  type="button"
+                  onClick={async () => {
+                    const confirmed = window.confirm(
+                      `Are you sure you want to delete ${managedUser.name}?`
+                    );
+
+                    if (!confirmed) {
+                      return;
+                    }
+
+                    const token =
+                      localStorage.getItem(
+                        "access_token"
+                      );
+
+                    if (!token) {
+                      window.location.href = "/";
+                      return;
+                    }
+
+                    try {
+                      const response = await fetch(
+                        `http://127.0.0.1:8000/auth/users/${managedUser.id}`,
+                        {
+                          method: "DELETE",
+                          headers: {
+                            Authorization: `Bearer ${token}`,
+                          },
+                        }
+                      );
+
+                      const data =
+                        await response.json();
+
+                      if (!response.ok) {
+                        alert(
+                          data.detail ||
+                            "Failed to delete user"
+                        );
+                        return;
+                      }
+
+                      alert(
+                        "User deleted successfully!"
+                      );
+
+                      fetchAllUsers();
+                    } catch (error) {
+                      console.error(
+                        "Delete user error:",
+                        error
+                      );
+
+                      alert(
+                        "Unable to connect to server"
+                      );
+                    }
+                  }}
+                  className="px-3 py-2 rounded-lg bg-red-600 text-white text-xs font-semibold hover:bg-red-700"
+                >
+                  Delete
+                </button>
+
+              </div>
+            )}
+          </td>
+
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</div>
+      </>
     )}
 
   </div>

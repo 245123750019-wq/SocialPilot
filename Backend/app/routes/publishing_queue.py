@@ -91,6 +91,38 @@ def get_publishing_queue(
 
     return response
 
+# ==================================================
+# GET USER DRAFTS
+# ==================================================
+
+@router.get("/drafts")
+def get_user_drafts(
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+
+    drafts = (
+        db.query(Post)
+        .filter(
+            Post.user_id == user_id,
+            Post.status == "draft"
+        )
+        .order_by(
+            Post.post_id.desc()
+        )
+        .all()
+    )
+
+    return [
+        {
+            "post_id": draft.post_id,
+            "content": draft.content,
+            "status": draft.status,
+            "post_type": draft.post_type
+        }
+        for draft in drafts
+    ]
+
 
 # ==================================================
 # UPDATE QUEUE STATUS

@@ -171,6 +171,36 @@ def youtube_callback(
 
     channel_title = channel["snippet"]["title"]
 
+    existing_account = (
+        db.query(SocialAccount)
+        .filter(
+            SocialAccount.user_id == user_id,
+            SocialAccount.platform == "YouTube"
+        )
+        .order_by(
+            SocialAccount.account_id.desc()
+        )
+        .first()
+    )
+
+    if existing_account:
+        existing_account.username = channel_title
+        existing_account.access_token = credentials.token
+
+        if credentials.refresh_token:
+            existing_account.refresh_token = (
+                credentials.refresh_token
+            )
+
+        db.commit()
+        db.refresh(existing_account)
+
+        return {
+            "message": "YouTube account connected successfully",
+            "account_id": existing_account.account_id,
+            "channel_name": channel_title
+        }
+
     new_account = SocialAccount(
         user_id=user_id,
         platform="YouTube",
@@ -247,11 +277,12 @@ def get_social_account(
     return account
 
 
+
 @router.delete("/{account_id}")
 def disconnect_social_account(
     account_id: int,
-    user_id: int = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id)
 ):
     account = (
         db.query(SocialAccount)
@@ -265,12 +296,16 @@ def disconnect_social_account(
     if not account:
         raise HTTPException(
             status_code=404,
-            detail="Social account not found"
+            detail="Social account not found."
         )
 
-    db.delete(account)
+    # Keep the social account record because existing posts
+    # may still reference it.
+    account.access_token = None
+    account.refresh_token = None
+
     db.commit()
 
     return {
-        "message": "Social account disconnected successfully"
+        "message": "Social account disconnected successfully."
     }

@@ -106,12 +106,18 @@ def login(
             detail="Invalid email or password"
         )
 
+    if not user.is_active:
+        raise HTTPException(
+            status_code=403,
+            detail="Your account has been deactivated"
+        )
+
     access_token = create_access_token(
-    data={
-        "user_id": user.user_id,
-        "role": user.role
-    }
-)
+        data={
+            "user_id": user.user_id,
+            "role": user.role
+        }
+    )
 
     return {
         "access_token": access_token,
@@ -161,15 +167,16 @@ def get_all_users(
     users = db.query(User).all()
 
     return [
-        {
-            "id": user.user_id,
-            "name": user.name,
-            "email": user.email,
-            "role": user.role,
-            "created_at": user.created_at
-        }
-        for user in users
-    ]
+    {
+        "id": user.user_id,
+        "name": user.name,
+        "email": user.email,
+        "role": user.role,
+        "is_active": user.is_active,
+        "created_at": user.created_at
+    }
+    for user in users
+]
 
 
 @router.delete("/users/{user_id}")
@@ -239,4 +246,41 @@ def update_user_role(
         "message": "User role updated successfully",
         "user_id": user.user_id,
         "role": user.role
+    }
+@router.put("/users/{user_id}/status")
+def update_user_status(
+    user_id: int,
+    is_active: bool,
+    admin_user: User = Depends(require_role("admin")),
+    db: Session = Depends(get_db)
+):
+    if user_id == admin_user.user_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Admin cannot deactivate their own account"
+        )
+
+    user = db.query(User).filter(
+        User.user_id == user_id
+    ).first()
+
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
+
+    user.is_active = is_active
+
+    db.commit()
+    db.refresh(user)
+
+    return {
+        "message": (
+            "User activated successfully"
+            if is_active
+            else "User deactivated successfully"
+        ),
+        "user_id": user.user_id,
+        "is_active": user.is_active
     }

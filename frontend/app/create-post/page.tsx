@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 
 type ContentType =
   | "Text"
@@ -24,7 +25,8 @@ interface Campaign {
 
 export default function CreatePostPage() {
   // ==================== CONTENT ====================
-
+  const searchParams = useSearchParams();
+  const draftId = searchParams.get("draft_id");
   const [contentType, setContentType] =
     useState<ContentType>("Text");
 
@@ -93,6 +95,66 @@ export default function CreatePostPage() {
 
     fetchCampaigns();
   }, []);
+  useEffect(() => {
+    const loadDraft = async () => {
+      if (!draftId) {
+        return;
+      }
+  
+      const token = localStorage.getItem("access_token");
+  
+      if (!token) {
+        return;
+      }
+  
+      try {
+        const response = await fetch(
+          `http://127.0.0.1:8000/posts/draft/${draftId}`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+  
+        const data = await response.json();
+  
+        if (!response.ok) {
+          alert(
+            data.detail ||
+              "Failed to load draft."
+          );
+          return;
+        }
+  
+        setContent(data.content || "");
+  
+        if (data.post_type) {
+          setContentType(
+            data.post_type as ContentType
+          );
+        }
+  
+        if (data.campaign_id) {
+          setSelectedCampaignId(
+            String(data.campaign_id)
+          );
+        }
+  
+      } catch (error) {
+        console.error(
+          "Load draft error:",
+          error
+        );
+  
+        alert(
+          "Unable to load the draft."
+        );
+      }
+    };
+  
+    loadDraft();
+  }, [draftId]);
 
   // ==================== PLATFORM TOGGLE ====================
 
@@ -541,7 +603,7 @@ export default function CreatePostPage() {
               )}
 
               <p className="mt-3 text-xs text-gray-400">
-                Media upload to cloud storage will be connected later.
+                  Video uploaded successfully to SocialPilot storage.
               </p>
 
             </section>

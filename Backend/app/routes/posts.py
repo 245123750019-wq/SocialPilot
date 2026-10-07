@@ -87,15 +87,13 @@ def create_draft(
     user_id: int = Depends(get_current_user_id),
     db: Session = Depends(get_db)
 ):
-
     if not draft_data.content.strip():
-
         raise HTTPException(
             status_code=400,
             detail="Draft content cannot be empty."
         )
 
-        new_post = Post(
+    new_post = Post(
         user_id=user_id,
         content=draft_data.content.strip(),
         status="draft",
@@ -112,6 +110,39 @@ def create_draft(
         message="Draft saved successfully",
         post_ids=[new_post.post_id]
     )
+    # ==================================================
+# GET DRAFT
+# ==================================================
+
+@router.get("/draft/{post_id}")
+def get_draft(
+    post_id: int,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    draft = (
+        db.query(Post)
+        .filter(
+            Post.post_id == post_id,
+            Post.user_id == user_id,
+            Post.status == "draft"
+        )
+        .first()
+    )
+
+    if not draft:
+        raise HTTPException(
+            status_code=404,
+            detail="Draft not found"
+        )
+
+    return {
+        "post_id": draft.post_id,
+        "content": draft.content,
+        "post_type": draft.post_type,
+        "status": draft.status,
+        "campaign_id": draft.campaign_id
+    }
 
 # ==================================================
 # CREATE / SCHEDULE POST
@@ -167,7 +198,8 @@ def create_post(
             db.query(SocialAccount)
             .filter(
                 SocialAccount.user_id == user_id,
-                SocialAccount.platform == platform
+                SocialAccount.platform == platform,
+                SocialAccount.access_token.isnot(None)
             )
             .first()
         )
