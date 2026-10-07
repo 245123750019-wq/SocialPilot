@@ -29,7 +29,7 @@ export default function CreateCampaignPage() {
     try {
         const token = localStorage.getItem("access_token");
 
-      const response = await fetch("http://127.0.0.1:8000/campaigns/", {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/campaigns/`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

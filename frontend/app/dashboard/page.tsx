@@ -145,7 +145,7 @@ const [comparisonAnalytics, setComparisonAnalytics] =
       try {
         // Get current user
         const userResponse = await fetch(
-          "http://127.0.0.1:8000/auth/me",
+          `${process.env.NEXT_PUBLIC_API_URL}/auth/me`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -164,7 +164,7 @@ const [comparisonAnalytics, setComparisonAnalytics] =
 
         // Get connected social accounts
         const accountsResponse = await fetch(
-          "http://127.0.0.1:8000/social-accounts/",
+          `${process.env.NEXT_PUBLIC_API_URL}/social-accounts/`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -182,7 +182,7 @@ const [comparisonAnalytics, setComparisonAnalytics] =
                 // Get campaign analytics
                 // Get the user's campaigns
                 const campaignsResponse = await fetch(
-                "http://127.0.0.1:8000/campaigns/",
+                `${process.env.NEXT_PUBLIC_API_URL}/campaigns/`,
                 {
                     headers: {
                     Authorization: `Bearer ${token}`,
@@ -205,7 +205,7 @@ const [comparisonAnalytics, setComparisonAnalytics] =
               setSelectedCampaignId(selectedCampaign.campaign_id);
 
               const campaignResponse = await fetch(
-                `http://127.0.0.1:8000/analytics/campaigns/${selectedCampaign.campaign_id}`,
+                `${process.env.NEXT_PUBLIC_API_URL}/analytics/campaigns/${selectedCampaign.campaign_id}`,
             {
             headers: {
             Authorization: `Bearer ${token}`,
@@ -229,7 +229,7 @@ const instagramAccount =
 
   if (instagramAccount) {
     const audienceResponse = await fetch(
-      `http://127.0.0.1:8000/analytics/audience/${instagramAccount.account_id}`,
+      `${process.env.NEXT_PUBLIC_API_URL}/analytics/audience/${instagramAccount.account_id}`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -252,7 +252,7 @@ const instagramAccount =
     }
 
     const audienceInsightsResponse = await fetch(
-      `http://127.0.0.1:8000/analytics/audience-insights/${instagramAccount.account_id}`,
+      `${process.env.NEXT_PUBLIC_API_URL}/analytics/audience-insights/${instagramAccount.account_id}`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -293,7 +293,7 @@ const instagramAccount =
 
     try {
       const response = await fetch(
-        "http://127.0.0.1:8000/auth/users",
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/users`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -337,7 +337,7 @@ const instagramAccount =
   
     try {
       const response = await fetch(
-        `http://127.0.0.1:8000/auth/users/${userId}/status?is_active=${isActive}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/users/${userId}/status?is_active=${isActive}`,
         {
           method: "PUT",
           headers: {
@@ -398,7 +398,7 @@ const instagramAccount =
 
       try {
         const response = await fetch(
-          `http://127.0.0.1:8000/analytics/campaigns/${selectedCampaignId}`,
+          `${process.env.NEXT_PUBLIC_API_URL}/analytics/campaigns/${selectedCampaignId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -432,7 +432,7 @@ const instagramAccount =
 
       try {
         const response = await fetch(
-          `http://127.0.0.1:8000/analytics/campaigns/${comparisonCampaignId}`,
+          `${process.env.NEXT_PUBLIC_API_URL}/analytics/campaigns/${comparisonCampaignId}`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -470,7 +470,7 @@ const instagramAccount =
 
     try {
       const response = await fetch(
-        "http://127.0.0.1:8000/social-accounts/",
+        `${process.env.NEXT_PUBLIC_API_URL}/social-accounts/`,
         {
           method: "POST",
           headers: {
@@ -1748,7 +1748,7 @@ const instagramAccount =
 
                     try {
                       const response = await fetch(
-                        `http://127.0.0.1:8000/auth/users/${managedUser.id}/role?role=${newRole}`,
+                        `${process.env.NEXT_PUBLIC_API_URL}/auth/users/${managedUser.id}/role?role=${newRole}`,
                         {
                           method: "PUT",
                           headers: {
@@ -1813,7 +1813,7 @@ const instagramAccount =
 
                     try {
                       const response = await fetch(
-                        `http://127.0.0.1:8000/auth/users/${managedUser.id}`,
+                        `${process.env.NEXT_PUBLIC_API_URL}/auth/users/${managedUser.id}`,
                         {
                           method: "DELETE",
                           headers: {

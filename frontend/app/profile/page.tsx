@@ -35,7 +35,7 @@ export default function Profile() {
 
     try {
       const response = await fetch(
-        "http://127.0.0.1:8000/social-accounts/youtube/connect",
+        `${process.env.NEXT_PUBLIC_API_URL}/social-accounts/youtube/connect`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -97,7 +97,7 @@ export default function Profile() {
 
     try {
       const response = await fetch(
-        `http://127.0.0.1:8000/social-accounts/${youtubeAccount.account_id}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/social-accounts/${youtubeAccount.account_id}`,
         {
           method: "DELETE",
           headers: {
@@ -148,7 +148,7 @@ export default function Profile() {
     const loadProfile = async () => {
       try {
         const userResponse = await fetch(
-          "http://127.0.0.1:8000/auth/me",
+          `${process.env.NEXT_PUBLIC_API_URL}/auth/me`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
@@ -172,7 +172,7 @@ export default function Profile() {
 
         const accountsResponse =
           await fetch(
-            "http://127.0.0.1:8000/social-accounts/",
+            `${process.env.NEXT_PUBLIC_API_URL}/social-accounts/`,
             {
               headers: {
                 Authorization: `Bearer ${token}`,

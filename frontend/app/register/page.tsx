@@ -17,7 +17,7 @@ export default function Register() {
 
     try {
       const response = await fetch(
-        "http://127.0.0.1:8000/auth/register",
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/register`,
         {
           method: "POST",
           headers: {

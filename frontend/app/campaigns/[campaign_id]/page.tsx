@@ -77,7 +77,7 @@ export default function CampaignDetailsPage() {
         };
 
         const campaignResponse = await fetch(
-          `http://127.0.0.1:8000/campaigns/${campaignId}`,
+          `${process.env.NEXT_PUBLIC_API_URL}/campaigns/${campaignId}`,
           { headers }
         );
 
@@ -89,7 +89,7 @@ export default function CampaignDetailsPage() {
         setCampaign(campaignData);
 
         const summaryResponse = await fetch(
-          `http://127.0.0.1:8000/campaigns/${campaignId}/summary`,
+          `${process.env.NEXT_PUBLIC_API_URL}/campaigns/${campaignId}/summary`,
           { headers }
         );
 
@@ -99,7 +99,7 @@ export default function CampaignDetailsPage() {
         }
 
         const reportResponse = await fetch(
-          `http://127.0.0.1:8000/campaigns/${campaignId}/report`,
+          `${process.env.NEXT_PUBLIC_API_URL}/campaigns/${campaignId}/report`,
           { headers }
         );
 
@@ -109,7 +109,7 @@ export default function CampaignDetailsPage() {
         }
 
         const postsResponse = await fetch(
-          `http://127.0.0.1:8000/campaigns/${campaignId}/posts`,
+          `${process.env.NEXT_PUBLIC_API_URL}/campaigns/${campaignId}/posts`,
           { headers }
         );
         
@@ -119,7 +119,7 @@ export default function CampaignDetailsPage() {
         }
 
         const analyticsResponse = await fetch(
-          `http://127.0.0.1:8000/analytics/campaigns/${campaignId}`,
+          `${process.env.NEXT_PUBLIC_API_URL}/analytics/campaigns/${campaignId}`,
           { headers }
         );
 

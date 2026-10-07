@@ -20,7 +20,7 @@ export default function Home() {
       formData.append("password", password);
 
       const response = await fetch(
-        "http://127.0.0.1:8000/auth/login",
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
         {
           method: "POST",
           headers: {
@@ -40,7 +40,7 @@ export default function Home() {
       localStorage.setItem("access_token", data.access_token);
 
       const meResponse = await fetch(
-        "http://127.0.0.1:8000/auth/me",
+        `${process.env.NEXT_PUBLIC_API_URL}/auth/me`,
         {
           headers: {
             Authorization: `Bearer ${data.access_token}`,

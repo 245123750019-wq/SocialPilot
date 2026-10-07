@@ -50,7 +50,7 @@ export default function PublishingQueuePage() {
       setError("");
 
       const response = await fetch(
-        "http://127.0.0.1:8000/publishing-queue/",
+        `${process.env.NEXT_PUBLIC_API_URL}/publishing-queue/`,
         {
           method: "GET",
           headers: {
@@ -92,7 +92,7 @@ export default function PublishingQueuePage() {
       setDraftsLoading(true);
   
       const response = await fetch(
-        "http://127.0.0.1:8000/publishing-queue/drafts",
+        `${process.env.NEXT_PUBLIC_API_URL}/publishing-queue/drafts`,
         {
           method: "GET",
           headers: {
@@ -185,7 +185,7 @@ export default function PublishingQueuePage() {
 
     try {
       const response = await fetch(
-        `http://127.0.0.1:8000/publishing-queue/${queueId}`,
+        `${process.env.NEXT_PUBLIC_API_URL}/publishing-queue/${queueId}`,
         {
           method: "PATCH",
           headers: {

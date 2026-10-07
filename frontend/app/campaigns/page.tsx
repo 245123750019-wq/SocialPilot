@@ -32,7 +32,7 @@ export default function CampaignsPage() {
     const fetchCampaigns = async () => {
       try {
         const response = await fetch(
-          "http://127.0.0.1:8000/campaigns/",
+          `${process.env.NEXT_PUBLIC_API_URL}/campaigns/`,
           {
             headers: {
               Authorization: `Bearer ${token}`,
