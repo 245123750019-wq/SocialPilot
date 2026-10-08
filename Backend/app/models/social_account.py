@@ -6,7 +6,7 @@ class SocialAccount(Base):
     __tablename__ = "social_accounts"
 
     account_id = Column(Integer, primary_key=True, index=True)
-    user_id = Column(Integer, ForeignKey("users.user_id"), nullable=True)
+    user_id = Column(Integer, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=True)
     platform = Column(String(50), nullable=False)
     username = Column(String(100), nullable=False)
     access_token = Column(Text, nullable=True)
