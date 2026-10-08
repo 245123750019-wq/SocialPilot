@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 from datetime import datetime, timezone
 import os
 
@@ -201,12 +202,197 @@ def delete_user(
             detail="User not found"
         )
 
-    db.delete(user)
-    db.commit()
+    try:
+        # Delete publishing logs connected to this user's posts
+        # or publishing queues
+        db.execute(
+            text("""
+                DELETE FROM publishing_logs
+                WHERE post_id IN (
+                    SELECT post_id
+                    FROM posts
+                    WHERE user_id = :user_id
+                       OR account_id IN (
+                           SELECT account_id
+                           FROM social_accounts
+                           WHERE user_id = :user_id
+                       )
+                       OR campaign_id IN (
+                           SELECT campaign_id
+                           FROM campaigns
+                           WHERE user_id = :user_id
+                       )
+                )
+                OR queue_id IN (
+                    SELECT queue_id
+                    FROM publishing_queue
+                    WHERE post_id IN (
+                        SELECT post_id
+                        FROM posts
+                        WHERE user_id = :user_id
+                           OR account_id IN (
+                               SELECT account_id
+                               FROM social_accounts
+                               WHERE user_id = :user_id
+                           )
+                           OR campaign_id IN (
+                               SELECT campaign_id
+                               FROM campaigns
+                               WHERE user_id = :user_id
+                           )
+                    )
+                )
+            """),
+            {"user_id": user_id}
+        )
 
-    return {
-        "message": "User deleted successfully"
-    }
+        # Delete publishing queue entries
+        db.execute(
+            text("""
+                DELETE FROM publishing_queue
+                WHERE post_id IN (
+                    SELECT post_id
+                    FROM posts
+                    WHERE user_id = :user_id
+                       OR account_id IN (
+                           SELECT account_id
+                           FROM social_accounts
+                           WHERE user_id = :user_id
+                       )
+                       OR campaign_id IN (
+                           SELECT campaign_id
+                           FROM campaigns
+                           WHERE user_id = :user_id
+                       )
+                )
+            """),
+            {"user_id": user_id}
+        )
+
+        # Delete scheduled posts
+        db.execute(
+            text("""
+                DELETE FROM scheduled_posts
+                WHERE post_id IN (
+                    SELECT post_id
+                    FROM posts
+                    WHERE user_id = :user_id
+                       OR account_id IN (
+                           SELECT account_id
+                           FROM social_accounts
+                           WHERE user_id = :user_id
+                       )
+                       OR campaign_id IN (
+                           SELECT campaign_id
+                           FROM campaigns
+                           WHERE user_id = :user_id
+                       )
+                )
+            """),
+            {"user_id": user_id}
+        )
+
+        # Delete recurring posts
+        db.execute(
+            text("""
+                DELETE FROM recurring_posts
+                WHERE post_id IN (
+                    SELECT post_id
+                    FROM posts
+                    WHERE user_id = :user_id
+                       OR account_id IN (
+                           SELECT account_id
+                           FROM social_accounts
+                           WHERE user_id = :user_id
+                       )
+                       OR campaign_id IN (
+                           SELECT campaign_id
+                           FROM campaigns
+                           WHERE user_id = :user_id
+                       )
+                )
+            """),
+            {"user_id": user_id}
+        )
+
+        # Delete post analytics
+        db.execute(
+            text("""
+                DELETE FROM post_analytics
+                WHERE post_id IN (
+                    SELECT post_id
+                    FROM posts
+                    WHERE user_id = :user_id
+                       OR account_id IN (
+                           SELECT account_id
+                           FROM social_accounts
+                           WHERE user_id = :user_id
+                       )
+                       OR campaign_id IN (
+                           SELECT campaign_id
+                           FROM campaigns
+                           WHERE user_id = :user_id
+                       )
+                )
+            """),
+            {"user_id": user_id}
+        )
+
+        # Delete posts
+        db.execute(
+            text("""
+                DELETE FROM posts
+                WHERE user_id = :user_id
+                   OR account_id IN (
+                       SELECT account_id
+                       FROM social_accounts
+                       WHERE user_id = :user_id
+                   )
+                   OR campaign_id IN (
+                       SELECT campaign_id
+                       FROM campaigns
+                       WHERE user_id = :user_id
+                   )
+            """),
+            {"user_id": user_id}
+        )
+
+        # Delete campaigns
+        db.execute(
+            text("""
+                DELETE FROM campaigns
+                WHERE user_id = :user_id
+            """),
+            {"user_id": user_id}
+        )
+
+        # Delete social accounts
+        db.execute(
+            text("""
+                DELETE FROM social_accounts
+                WHERE user_id = :user_id
+            """),
+            {"user_id": user_id}
+        )
+
+        # Finally delete the user
+        db.execute(
+            text("""
+                DELETE FROM users
+                WHERE user_id = :user_id
+            """),
+            {"user_id": user_id}
+        )
+
+        db.commit()
+
+        return {
+            "message": "User deleted successfully"
+        }
+
+    except Exception:
+        db.rollback()
+        raise
 
 
 @router.put("/users/{user_id}/role")
