@@ -191,9 +191,13 @@ def process_queue_item(queue_id: int):
             video_path = post.media_url
 
             # If the database contains a relative upload path,
-            # convert it to Backend/uploads/...
-            if not os.path.isabs(video_path):
-
+# Convert only local relative paths to absolute paths.
+# Supabase Storage object paths must remain unchanged.
+            if (
+                video_path
+                and not os.path.isabs(video_path)
+                and not video_path.startswith("uploads/")
+            ):
                 backend_dir = os.path.abspath(
                     os.path.join(
                         os.path.dirname(__file__),
@@ -201,24 +205,7 @@ def process_queue_item(queue_id: int):
                         ".."
                     )
                 )
-
-                video_path = os.path.join(
-                    backend_dir,
-                    video_path
-                )
-
-            # Normalize the path.
-            video_path = os.path.abspath(video_path)
-
-            print(
-                "YouTube video path:",
-                video_path
-            )
-
-            if not os.path.exists(video_path):
-                raise Exception(
-                    f"YouTube video file was not found: {video_path}"
-                )
+                video_path = os.path.join(backend_dir, video_path)
 
             result = publish_youtube_video(
                 access_token=social_account.access_token,
