@@ -23,16 +23,19 @@ app = FastAPI(title="SocialPilot API")
 
 
 
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
         "https://socialpilot-beta.vercel.app",
+        "https://socialpilot-17hzag5jm-245123750019-wq.vercel.app",
     ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 
 app.include_router(auth_router)
