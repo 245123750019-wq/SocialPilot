@@ -246,7 +246,10 @@ def get_social_accounts(
 ):
     accounts = (
         db.query(SocialAccount)
-        .filter(SocialAccount.user_id == user_id)
+        .filter(
+            SocialAccount.user_id == user_id,
+            SocialAccount.access_token.isnot(None)
+        )
         .all()
     )
 
