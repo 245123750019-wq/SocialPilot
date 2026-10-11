@@ -264,7 +264,9 @@ export default function PublishingQueuePage() {
       return dateString;
     }
 
-    return date.toLocaleString();
+    return date.toLocaleString("en-IN", {
+      timeZone: "Asia/Kolkata",
+    });
   };
 
   // ==================== FILTER ====================
