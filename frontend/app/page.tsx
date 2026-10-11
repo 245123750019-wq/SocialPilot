@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 
 export default function Home() {
   const [email, setEmail] = useState("");
@@ -193,11 +194,22 @@ export default function Home() {
               className="w-full py-3.5 rounded-xl bg-indigo-600 text-white font-semibold shadow-lg shadow-indigo-200 transition hover:bg-indigo-700 hover:-translate-y-0.5 disabled:opacity-60 disabled:cursor-not-allowed"
             >
               {loading ? "Signing in..." : "Sign in"}
-            </button>
+              </button>
 
-          </form>
+            </form>
 
-          {/* Divider */}
+            {/* Register Link */}
+            <p className="text-center text-sm text-gray-600 mt-5">
+              New to SocialPilot?{" "}
+              <Link
+                href="/register"
+                className="font-semibold text-indigo-600 hover:text-indigo-700"
+              >
+                Create an account
+              </Link>
+            </p>
+
+            {/* Divider */}
           <div className="flex items-center gap-4 my-7">
             <div className="flex-1 h-px bg-gray-200" />
             <span className="text-sm text-gray-400">
