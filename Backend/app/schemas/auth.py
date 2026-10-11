@@ -20,3 +20,8 @@ class LoginRequest(BaseModel):
     email: EmailStr
 
     password: str
+class ProfileUpdateRequest(BaseModel):
+    name: str
+    email: EmailStr
+    current_password: str | None = None
+    new_password: str | None = None

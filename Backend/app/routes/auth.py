@@ -7,7 +7,7 @@ import os
 
 from app.database.database import SessionLocal
 from app.models.user import User
-from app.schemas.auth import RegisterRequest
+from app.schemas.auth import RegisterRequest, ProfileUpdateRequest
 from app.core.security import (
     hash_password,
     verify_password,
@@ -149,6 +149,69 @@ def get_me(
     "email": user.email,
     "role": user.role
 }
+
+@router.patch("/me")
+def update_me(
+    profile_data: ProfileUpdateRequest,
+    user_id: int = Depends(get_current_user_id),
+    db: Session = Depends(get_db)
+):
+    user = db.query(User).filter(
+        User.user_id == user_id
+    ).first()
+
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    name = profile_data.name.strip()
+    email = str(profile_data.email).strip().lower()
+
+    if not name:
+        raise HTTPException(status_code=400, detail="Name cannot be empty")
+
+    existing_user = db.query(User).filter(
+        User.email == email,
+        User.user_id != user_id
+    ).first()
+
+    if existing_user:
+        raise HTTPException(status_code=400, detail="Email already registered")
+
+    if profile_data.current_password or profile_data.new_password:
+        if not profile_data.current_password or not profile_data.new_password:
+            raise HTTPException(
+                status_code=400,
+                detail="Enter both current and new passwords"
+            )
+
+        if not verify_password(profile_data.current_password, user.password):
+            raise HTTPException(
+                status_code=400,
+                detail="Current password is incorrect"
+            )
+
+        if len(profile_data.new_password) < 8:
+            raise HTTPException(
+                status_code=400,
+                detail="New password must be at least 8 characters"
+            )
+
+        user.password = hash_password(profile_data.new_password)
+
+    user.name = name
+    user.email = email
+
+    db.commit()
+    db.refresh(user)
+
+    return {
+        "message": "Profile updated successfully",
+        "id": user.user_id,
+        "name": user.name,
+        "email": user.email,
+        "role": user.role
+    }
+
 @router.get("/admin-test")
 def admin_test(
     admin_user: User = Depends(require_role("admin"))
