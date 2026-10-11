@@ -47,7 +47,7 @@ export default function Sidebar() {
 
   return (
     <aside
-      className={`min-h-screen shrink-0 bg-white border-r border-slate-200 flex flex-col transition-all duration-300 w-16 ${
+      className={`fixed left-0 top-0 z-50 h-screen shrink-0 bg-white border-r border-slate-200 flex flex-col transition-all duration-300 w-16 ${
         isOpen ? "md:w-64" : "md:w-20"
       }`}
     >

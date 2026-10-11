@@ -17,10 +17,10 @@ export default function AppShell({
   }
 
   return (
-    <div className="flex min-h-screen bg-slate-100">
+    <div className="min-h-screen bg-slate-100">
       <Sidebar />
 
-      <main className="flex-1 min-w-0">
+      <main className="ml-16 md:ml-64 min-w-0">
         {children}
       </main>
     </div>
