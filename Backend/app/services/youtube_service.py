@@ -73,7 +73,7 @@ def publish_youtube_video(
                 "description": description
             },
             "status": {
-                "privacyStatus": "private"
+                "privacyStatus": "public"
             }
         }
 
