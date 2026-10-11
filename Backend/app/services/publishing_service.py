@@ -184,28 +184,13 @@ def process_queue_item(queue_id: int):
                     "YouTube video file is missing."
                 )
 
-            # --------------------------------------------------
+            # ----------------------------------------
             # Convert stored upload path to local filesystem path
+            # ----------------------------------------
             # --------------------------------------------------
-
+            # Preserve Supabase Storage object paths
+            # --------------------------------------------------
             video_path = post.media_url
-
-            # If the database contains a relative upload path,
-# Convert only local relative paths to absolute paths.
-# Supabase Storage object paths must remain unchanged.
-            if (
-                video_path
-                and not os.path.isabs(video_path)
-                and not video_path.startswith("uploads/")
-            ):
-                backend_dir = os.path.abspath(
-                    os.path.join(
-                        os.path.dirname(__file__),
-                        "..",
-                        ".."
-                    )
-                )
-                video_path = os.path.join(backend_dir, video_path)
 
             result = publish_youtube_video(
                 access_token=social_account.access_token,
