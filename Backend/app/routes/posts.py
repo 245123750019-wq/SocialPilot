@@ -1,4 +1,5 @@
 from datetime import datetime, timedelta, timezone
+from zoneinfo import ZoneInfo
 
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
@@ -174,17 +175,25 @@ def create_post(
     # --------------------------------------------------
 
     try:
-
         scheduled_datetime = datetime.fromisoformat(
             post_data.scheduled_at
         )
 
-    except ValueError:
+        if scheduled_datetime.tzinfo is None:
+            scheduled_datetime = scheduled_datetime.replace(
+                tzinfo=ZoneInfo("Asia/Kolkata")
+            )
 
+        scheduled_datetime = scheduled_datetime.astimezone(
+            timezone.utc
+        )
+
+    except ValueError:
         raise HTTPException(
             status_code=400,
             detail="Invalid scheduled date/time."
         )
+
 
     # --------------------------------------------------
     # Find connected account for each platform
