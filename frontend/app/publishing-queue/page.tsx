@@ -258,12 +258,17 @@ export default function PublishingQueuePage() {
   // ==================== FORMAT DATE ====================
 
   const formatDateTime = (dateString: string) => {
-    const date = new Date(dateString);
-
+    const normalizedDateString =
+      /(?:Z|[+-]\d{2}:\d{2})$/.test(dateString)
+        ? dateString
+        : `${dateString}Z`;
+  
+    const date = new Date(normalizedDateString);
+  
     if (Number.isNaN(date.getTime())) {
       return dateString;
     }
-
+  
     return date.toLocaleString("en-IN", {
       timeZone: "Asia/Kolkata",
     });
