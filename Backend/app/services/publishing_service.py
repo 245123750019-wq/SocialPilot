@@ -6,6 +6,7 @@ from app.models.publishing_queue import PublishingQueue
 from app.models.publishing_log import PublishingLog
 from app.models.post import Post
 from app.models.social_account import SocialAccount
+from app.models.notification import Notification
 
 from app.services.instagram_service import publish_instagram_image
 from app.services.x_service import publish_x_post
@@ -232,22 +233,44 @@ def process_queue_item(queue_id: int):
 
         db.add(publishing_log)
 
+        notification_user_id = post.user_id
+
+        if notification_user_id is None and post.account_id is not None:
+            social_account = (
+                db.query(SocialAccount)
+                .filter(SocialAccount.account_id == post.account_id)
+                .first()
+            )
+
+            if social_account:
+                notification_user_id = social_account.user_id
+
+        if notification_user_id is not None:
+            db.add(
+                Notification(
+                    user_id=notification_user_id,
+                    title="Post Published Successfully",
+                    message=f"Your {queue_item.platform} post was published successfully.",
+                    notification_type="publishing_success",
+                    is_read=False,
+                    link="/publishing-logs",
+                    created_at=datetime.now(timezone.utc).replace(tzinfo=None),
+                )
+            )
+
         db.commit()
 
-    except Exception as error:
 
+    except Exception as error:
         db.rollback()
 
         queue_item = (
             db.query(PublishingQueue)
-            .filter(
-                PublishingQueue.queue_id == queue_id
-            )
+            .filter(PublishingQueue.queue_id == queue_id)
             .first()
         )
 
         if queue_item:
-
             queue_item.status = "failed"
 
             db.add(
@@ -258,10 +281,46 @@ def process_queue_item(queue_id: int):
                     status="failed",
                     published_at=None,
                     error_message=str(error),
-                    retry_count=queue_item.retry_count or 0
+                    retry_count=queue_item.retry_count or 0,
                 )
             )
 
+            post = (
+                db.query(Post)
+                .filter(Post.post_id == queue_item.post_id)
+                .first()
+            )
+
+            notification_user_id = (
+                post.user_id if post and post.user_id is not None
+                else None
+            )
+
+            if notification_user_id is None and post and post.account_id is not None:
+                social_account = (
+                    db.query(SocialAccount)
+                    .filter(SocialAccount.account_id == post.account_id)
+                    .first()
+                )
+
+                if social_account:
+                    notification_user_id = social_account.user_id
+
+            if notification_user_id is not None:
+                db.add(
+                    Notification(
+                        user_id=notification_user_id,
+                        title="Post Publishing Failed",
+                        message=(
+                            f"Your {queue_item.platform} post failed to publish. "
+                            f"Reason: {str(error)}"
+                        ),
+                        notification_type="publishing_failure",
+                        is_read=False,
+                        link="/publishing-logs",
+                        created_at=datetime.now(timezone.utc).replace(tzinfo=None),
+                    )
+                )
             db.commit()
 
     finally:

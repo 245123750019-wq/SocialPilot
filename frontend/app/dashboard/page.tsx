@@ -12,6 +12,7 @@ import {
   Tooltip,
   ResponsiveContainer,
 } from "recharts";
+import NotificationBell from "../components/NotificationBell";
 
 interface User {
   id: number;
@@ -332,9 +333,9 @@ const instagramAccount =
     isActive: boolean
   ) => {
     const token = localStorage.getItem("access_token");
-  
+
     if (!token) return;
-  
+
     try {
       const response = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL}/auth/users/${userId}/status?is_active=${isActive}`,
@@ -345,18 +346,18 @@ const instagramAccount =
           },
         }
       );
-  
+
       if (!response.ok) {
         const errorData = await response.json();
-  
+
         alert(
           errorData.detail ||
           "Failed to update user status."
         );
-  
+
         return;
       }
-  
+
       setAllUsers((currentUsers) =>
         currentUsers.map((managedUser) =>
           managedUser.id === userId
@@ -367,17 +368,17 @@ const instagramAccount =
             : managedUser
         )
       );
-  
+
     } catch (error) {
       console.error(
         "Error updating user status:",
         error
       );
-  
+
       alert("Unable to connect to server.");
     }
   };
-  
+
   useEffect(() => {
     if (user?.role === "admin" && activeTab === "admin") {
       fetchAllUsers();
@@ -542,25 +543,32 @@ const instagramAccount =
 
       <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 lg:py-10 min-w-0">
 
-        {/* Welcome */}
-        <div className="mb-8">
 
-          <p className="text-indigo-600 font-semibold mb-1">
-            Dashboard
-          </p>
+{/* Welcome and top-right notifications */}
+<div className="mb-8 flex items-start justify-between gap-4">
+  <div className="min-w-0">
+    <p className="text-indigo-600 font-semibold mb-1">
+      Dashboard
+    </p>
 
-          <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 break-words">
-            Welcome, {user.name}! 👋
-          </h2>
-          <p className="text-sm text-indigo-600 font-medium mt-2">
-            Account type: {user.role === "admin" ? "Administrator" : "User"}
-          </p>
+    <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 break-words">
+      Welcome, {user.name}! 👋
+    </h2>
 
-          <p className="text-slate-500 mt-2">
-            Manage your social media accounts from one place.
-          </p>
+    <p className="text-sm text-indigo-600 font-medium mt-2">
+      Account type: {user.role === "admin" ? "Administrator" : "User"}
+    </p>
 
-        </div>
+    <p className="text-slate-500 mt-2">
+      Manage your social media accounts from one place.
+    </p>
+  </div>
+
+  <div className="shrink-0">
+    <NotificationBell />
+  </div>
+</div>
+
         {/* ==================== DASHBOARD TABS ==================== */}
 
         <div className="mb-8 bg-white rounded-2xl border border-slate-200 shadow-sm p-2 w-full overflow-hidden">

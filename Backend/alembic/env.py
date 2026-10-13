@@ -9,7 +9,13 @@ from alembic import context
 from dotenv import load_dotenv
 
 from app.database.database import Base
-from app.models import User, SocialAccount, Post, Campaign
+from app.models import (
+    User,
+    SocialAccount,
+    Post,
+    Campaign,
+    Notification,
+)
 
 
 # Load environment variables

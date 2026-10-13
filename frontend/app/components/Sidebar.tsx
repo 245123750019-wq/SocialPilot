@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
+import NotificationBell from "./NotificationBell";
 
 const menuSections = [
   {
@@ -29,6 +30,7 @@ const menuSections = [
   {
     title: "ACCOUNT",
     items: [
+      { label: "Notifications", href: "/notifications", icon: "🔔" },
       { label: "Profile", href: "/profile", icon: "👤" },
     ],
   },
@@ -94,7 +96,7 @@ export default function Sidebar() {
             title={isOpen ? "Collapse menu" : "Expand menu"}
           >
             ☰
-          </button>
+            </button>
         </div>
       </div>
 

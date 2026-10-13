@@ -7,3 +7,4 @@ from app.models.publishing_queue import PublishingQueue
 from app.models.publishing_log import PublishingLog
 from app.models.post_analytics import PostAnalytics
 from app.models.audience_analytics import AudienceAnalytics, AudienceInsight
+from app.models.notification import Notification

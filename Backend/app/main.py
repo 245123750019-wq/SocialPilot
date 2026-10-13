@@ -13,6 +13,7 @@ from app.routes.publishing_logs import router as publishing_logs_router
 from app.routes.campaigns import router as campaigns_router
 from app.routes.analytics import router as analytics_router
 from app.routes import uploads
+from app.routes.notifications import router as notifications_router
 from app.services.queue_scheduler import start_scheduler, stop_scheduler
 
 
@@ -47,6 +48,7 @@ app.include_router(publishing_logs_router)
 app.include_router(campaigns_router)
 app.include_router(analytics_router)
 app.include_router(uploads.router)
+app.include_router(notifications_router)
 
 @app.on_event("startup")
 def startup_event():
