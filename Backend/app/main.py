@@ -55,6 +55,9 @@ def startup_event():
     print("STARTUP EVENT: calling start_scheduler()", flush=True)
     start_scheduler()
     print("STARTUP EVENT: start_scheduler() finished", flush=True)
+    from app.services.queue_scheduler import scheduler
+    print("SCHEDULER RUNNING:", scheduler.running, flush=True)
+    print("SCHEDULER JOBS:", scheduler.get_jobs(), flush=True)
 
 
 @app.on_event("shutdown")
