@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from sqlalchemy import update
 import os
 
 from app.database.database import SessionLocal
@@ -32,9 +33,33 @@ def process_queue_item(queue_id: int):
         if not queue_item:
             return
 
-        # Do not process an item that is already completed.
-        if queue_item.status == "published":
+        # Only process items that are still scheduled.
+        if queue_item.status != "scheduled":
+            print(
+                f"Queue item {queue_id} is not scheduled; "
+                f"current status: {queue_item.status}",
+                flush=True,
+            )
             return
+
+        # Atomically claim the queue item before doing any other work.
+        claim_result = db.execute(
+            update(PublishingQueue)
+            .where(
+                PublishingQueue.queue_id == queue_id,
+                PublishingQueue.status == "scheduled",
+            )
+            .values(status="pending")
+        )
+        db.commit()
+
+        if claim_result.rowcount != 1:
+            print(
+                f"Queue item {queue_id} was already claimed.",
+                flush=True,
+            )
+            return
+
 
         post = (
             db.query(Post)
@@ -61,12 +86,6 @@ def process_queue_item(queue_id: int):
 
             db.commit()
             return
-
-        # Mark queue item as processing.
-        queue_item.status = "pending"
-
-        db.commit()
-
         # ==================================================
         # INSTAGRAM
         # ==================================================
