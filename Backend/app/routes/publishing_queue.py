@@ -185,7 +185,12 @@ def update_queue_status(
                 "Use scheduled, pending, published or failed."
             )
         )
-
+    # Prevent already-published posts from being rescheduled.
+    if queue_item.status == "published" and new_status == "scheduled":
+        raise HTTPException(
+            status_code=400,
+            detail="Published posts cannot be rescheduled."
+        )
     # --------------------------------------------------
     # Update queue status
     # --------------------------------------------------
