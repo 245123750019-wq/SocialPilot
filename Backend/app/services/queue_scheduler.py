@@ -13,19 +13,17 @@ logger = logging.getLogger(__name__)
 scheduler = BackgroundScheduler()
 
 
+
 def scheduler_job_listener(event):
     if event.exception:
-        logger.error(
-            "SCHEDULER JOB FAILED: %s",
-            event.job_id,
-            exc_info=(
-                type(event.exception),
-                event.exception,
-                event.exception.__traceback__,
-            ),
-        )
+        message = f"SCHEDULER JOB FAILED: {event.job_id}: {event.exception}"
+        print(message, flush=True)
+        logger.error(message)
     else:
-        logger.info("SCHEDULER JOB EXECUTED: %s", event.job_id)
+        message = f"SCHEDULER JOB EXECUTED: {event.job_id}"
+        print(message, flush=True)
+        logger.info(message)
+
 
 
 def check_publishing_queue():
