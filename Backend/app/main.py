@@ -52,7 +52,9 @@ app.include_router(notifications_router)
 
 @app.on_event("startup")
 def startup_event():
+    print("STARTUP EVENT: calling start_scheduler()", flush=True)
     start_scheduler()
+    print("STARTUP EVENT: start_scheduler() finished", flush=True)
 
 
 @app.on_event("shutdown")
