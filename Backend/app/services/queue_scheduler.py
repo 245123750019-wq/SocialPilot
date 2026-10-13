@@ -17,6 +17,7 @@ def check_publishing_queue():
 
     try:
         now = datetime.now(timezone.utc).replace(tzinfo=None)
+        logger.info("Publishing queue check started.")
 
         queue_items = (
             db.query(PublishingQueue)
