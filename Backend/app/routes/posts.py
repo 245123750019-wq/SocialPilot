@@ -203,16 +203,20 @@ def create_post(
 
     for platform in post_data.platforms:
 
-        account = (
+
+        account_query = (
             db.query(SocialAccount)
             .filter(
                 SocialAccount.user_id == user_id,
                 SocialAccount.platform == platform,
                 SocialAccount.access_token.isnot(None)
             )
-            .first()
         )
-
+        if platform == "Instagram":
+            account_query = account_query.filter(
+                SocialAccount.username == "__bhavanii__1"
+            )
+        account = account_query.first()
         if not account:
 
             raise HTTPException(
@@ -260,6 +264,7 @@ def create_post(
             # ------------------------------------------
 
             new_post = Post(
+                user_id=user_id,
                 account_id=account.account_id,
                 content=post_data.content,
                 media_url=post_data.media_url,
@@ -357,6 +362,7 @@ def create_post(
         for account in selected_accounts:
 
             new_post = Post(
+                user_id=user_id,
                 account_id=account.account_id,
                 content=post_data.content,
                 media_url=post_data.media_url,

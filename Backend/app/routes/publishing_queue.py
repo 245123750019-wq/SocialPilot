@@ -167,6 +167,11 @@ def update_queue_status(
     queue_item, post, account = result
 
     new_status = status_data.status.lower()
+    print(
+    f"QUEUE STATUS UPDATE: queue_id={queue_id}, "
+    f"user_id={user_id}, new_status={new_status}",
+    flush=True
+)
 
     allowed_statuses = {
     "scheduled",
@@ -194,7 +199,12 @@ def update_queue_status(
     # --------------------------------------------------
     # Update queue status
     # --------------------------------------------------
-
+    print(
+    f"QUEUE STATUS CHANGE: queue_id={queue_id}, "
+    f"old_status={queue_item.status}, "
+    f"new_status={new_status}",
+    flush=True
+    )
     queue_item.status = new_status
 
     # --------------------------------------------------
@@ -306,6 +316,11 @@ def process_queue(
         raise HTTPException(
             status_code=400,
             detail="Queue item is already published."
+        )
+    if queue_item.status == "cancelled":
+        raise HTTPException(
+            status_code=400,
+            detail="Cancelled queue items cannot be processed."
         )
 
     # Add the publishing work to FastAPI's background tasks.

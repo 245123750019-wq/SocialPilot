@@ -12,6 +12,7 @@ from app.models.notification import Notification
 from app.services.instagram_service import publish_instagram_image
 from app.services.x_service import publish_x_post
 from app.services.youtube_service import publish_youtube_video
+from app.services.facebook_service import publish_facebook_post
 
 
 def process_queue_item(queue_id: int):
@@ -124,17 +125,70 @@ def process_queue_item(queue_id: int):
                     "Instagram image URL is missing."
                 )
 
-            result = publish_instagram_image(
+            if os.getenv("INSTAGRAM_DRY_RUN", "true").lower() == "true":
+                print("INSTAGRAM DRY RUN: Validation passed", flush=True)
+                print(f"Instagram user ID configured: {bool(instagram_user_id)}", flush=True)
+                print(f"Access token available: {bool(social_account.access_token)}", flush=True)
+                print(f"Image URL available: {bool(post.media_url)}", flush=True)
+                print(f"Caption available: {post.content is not None}", flush=True)
+
+                # Mark the dry-run as completed to prevent repeated scheduler processing.
+                queue_item.status = "dry_run"
+                db.commit()
+                print("DRY RUN COMPLETE: No post was published.", flush=True)
+                return
+            else:
+                result = publish_instagram_image(
                 instagram_user_id=instagram_user_id,
                 access_token=social_account.access_token,
                 image_url=post.media_url,
                 caption=post.content
-            )
+                )
 
             print(
                 "Instagram publishing result:",
                 result
             )
+
+        # ==================================================
+        # FACEBOOK
+        # ==================================================
+
+        elif queue_item.platform == "Facebook":
+
+            social_account = (
+                db.query(SocialAccount)
+                .filter(
+                    SocialAccount.account_id == post.account_id,
+                    SocialAccount.user_id == post.user_id,
+                    SocialAccount.platform == "Facebook"
+                )
+                .first()
+            )
+
+            if not social_account:
+                raise Exception("Facebook social account not found.")
+
+            if not social_account.access_token:
+                raise Exception(
+                    "Facebook Page access token is not configured."
+                )
+
+            page_id = os.getenv("FACEBOOK_PAGE_ID")
+
+            if not page_id:
+                raise Exception("Facebook Page ID is not configured.")
+
+            result = publish_facebook_post(
+                page_id=page_id,
+                access_token=social_account.access_token,
+                message=post.content or "",
+                image_url=post.media_url if post.post_type == "Image" else None,
+            )
+
+            print("Facebook publishing result:", result, flush=True)
+
+
 
         # ==================================================
         # X
@@ -289,7 +343,7 @@ def process_queue_item(queue_id: int):
             .first()
         )
 
-        if queue_item:
+        if queue_item and queue_item.status != "cancelled":
             queue_item.status = "failed"
 
             db.add(

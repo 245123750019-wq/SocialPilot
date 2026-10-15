@@ -74,3 +74,69 @@ async def upload_video(
         )
     finally:
         await file.close()
+
+IMAGE_BUCKET_NAME = "socialpilot-test-images"
+
+
+@router.post("/image")
+async def upload_image(
+    file: UploadFile = File(...),
+    user_id: int = Depends(get_current_user_id)
+):
+    if not file.content_type or not file.content_type.startswith("image/"):
+        raise HTTPException(
+            status_code=400,
+            detail="Only image files are allowed."
+        )
+
+    extension = os.path.splitext(file.filename or "")[1].lower()
+
+    if extension not in {".jpg", ".jpeg", ".png", ".webp"}:
+        raise HTTPException(
+            status_code=400,
+            detail="Only JPG, JPEG, PNG, and WebP images are supported."
+        )
+
+    filename = f"{user_id}/{uuid.uuid4()}{extension}"
+
+    try:
+        image_data = await file.read()
+
+        if not image_data:
+            raise HTTPException(
+                status_code=400,
+                detail="The uploaded image is empty."
+            )
+
+        supabase = get_supabase_client()
+
+        supabase.storage.from_(IMAGE_BUCKET_NAME).upload(
+            path=filename,
+            file=image_data,
+            file_options={
+                "content-type": file.content_type,
+                "upsert": "false"
+            }
+        )
+
+        public_url = (
+            f"{SUPABASE_URL.rstrip('/')}/storage/v1/object/public/"
+            f"{IMAGE_BUCKET_NAME}/{filename}"
+        )
+
+        return {
+            "message": "Image uploaded successfully",
+            "file_path": filename,
+            "public_url": public_url,
+            "storage": "supabase"
+        }
+
+    except HTTPException:
+        raise
+    except Exception as exc:
+        raise HTTPException(
+            status_code=500,
+            detail=f"Image upload failed: {str(exc)}"
+        )
+    finally:
+        await file.close()

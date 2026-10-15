@@ -23,6 +23,12 @@ interface Campaign {
   status: string | null;
 }
 
+interface SocialAccount {
+  account_id: number;
+  platform: string;
+  username: string;
+}
+
 function CreatePostPageContent() {
   // ==================== CONTENT ====================
   const searchParams = useSearchParams();
@@ -33,6 +39,8 @@ function CreatePostPageContent() {
   const [content, setContent] = useState("");
   const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [selectedCampaignId, setSelectedCampaignId] = useState("");
+
+  const [socialAccounts, setSocialAccounts] = useState<SocialAccount[]>([]);
 
   const [mediaFiles, setMediaFiles] = useState<File[]>([]);
 
@@ -95,18 +103,57 @@ function CreatePostPageContent() {
 
     fetchCampaigns();
   }, []);
+
+  // ==================== SOCIAL ACCOUNTS ====================
+
+  useEffect(() => {
+    const fetchSocialAccounts = async () => {
+      const token = localStorage.getItem("access_token");
+
+      if (!token) {
+        return;
+      }
+
+      try {
+        const response = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/social-accounts/`,
+          {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }
+        );
+
+        if (!response.ok) {
+          console.error("Failed to fetch social accounts");
+          return;
+        }
+
+        const data = await response.json();
+
+        setSocialAccounts(
+          Array.isArray(data) ? data : []
+        );
+      } catch (error) {
+        console.error("Social accounts error:", error);
+      }
+    };
+
+    fetchSocialAccounts();
+  }, []);
+
   useEffect(() => {
     const loadDraft = async () => {
       if (!draftId) {
         return;
       }
-  
+
       const token = localStorage.getItem("access_token");
-  
+
       if (!token) {
         return;
       }
-  
+
       try {
         const response = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/posts/draft/${draftId}`,
@@ -116,9 +163,9 @@ function CreatePostPageContent() {
             },
           }
         );
-  
+
         const data = await response.json();
-  
+
         if (!response.ok) {
           alert(
             data.detail ||
@@ -126,33 +173,33 @@ function CreatePostPageContent() {
           );
           return;
         }
-  
+
         setContent(data.content || "");
-  
+
         if (data.post_type) {
           setContentType(
             data.post_type as ContentType
           );
         }
-  
+
         if (data.campaign_id) {
           setSelectedCampaignId(
             String(data.campaign_id)
           );
         }
-  
+
       } catch (error) {
         console.error(
           "Load draft error:",
           error
         );
-  
+
         alert(
           "Unable to load the draft."
         );
       }
     };
-  
+
     loadDraft();
   }, [draftId]);
 
@@ -271,40 +318,41 @@ function CreatePostPageContent() {
       let mediaUrl: string | null = null;
 
       if (
-          contentType === "Video" &&
-          mediaFiles.length > 0
+        (contentType === "Image" || contentType === "Video") &&
+        mediaFiles.length > 0
       ) {
         const uploadData = new FormData();
 
-        uploadData.append(
-          "file",
-          mediaFiles[0]
-        );
+        uploadData.append("file", mediaFiles[0]);
 
         const uploadResponse = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/uploads/video`,
+          `${process.env.NEXT_PUBLIC_API_URL}/uploads/${
+            contentType === "Image" ? "image" : "video"
+          }`,
           {
-              method: "POST",
-              headers: {
+            method: "POST",
+            headers: {
               Authorization: `Bearer ${token}`,
-          },
-          body: uploadData,
+            },
+            body: uploadData,
+          }
+        );
+
+        const uploadResult = await uploadResponse.json();
+
+        if (!uploadResponse.ok) {
+          alert(
+            uploadResult.detail ||
+              `${contentType} upload failed.`
+          );
+          return;
+        }
+
+        mediaUrl =
+          contentType === "Image"
+            ? uploadResult.public_url
+            : uploadResult.file_path;
       }
-  );
-
-  const uploadResult =
-    await uploadResponse.json();
-
-  if (!uploadResponse.ok) {
-    alert(
-      uploadResult.detail ||
-        "Video upload failed."
-    );
-    return;
-  }
-
-  mediaUrl = uploadResult.file_path;
-}
 
       const requestBody = {
         content: content.trim(),
@@ -650,6 +698,44 @@ function CreatePostPageContent() {
                 ))}
 
               </div>
+
+              {platforms.length > 0 && (
+                <div className="mt-4 space-y-3">
+                  {platforms.map((platform) => {
+                    const accounts = socialAccounts.filter(
+                      (account) =>
+                        account.platform.toLowerCase() ===
+                        platform.toLowerCase()
+                    );
+
+                    return (
+                      <div
+                        key={platform}
+                        className="rounded-lg border border-gray-200 p-3"
+                      >
+                        <p className="text-sm font-medium text-gray-700">
+                          {platform} — Connected Account
+                        </p>
+
+                        {accounts.length > 0 ? (
+                          accounts.map((account) => (
+                            <p
+                              key={account.account_id}
+                              className="mt-1 text-sm text-gray-600"
+                            >
+                              {account.username}
+                            </p>
+                          ))
+                        ) : (
+                          <p className="mt-1 text-sm text-red-500">
+                            No connected account found.
+                          </p>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
 
               <p className="mt-3 text-xs text-gray-500">
                 Selected:{" "}

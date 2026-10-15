@@ -7,9 +7,8 @@ load_dotenv()
 
 
 
-META_GRAPH_API_VERSION = os.getenv("META_GRAPH_API_VERSION") or "REPLACE_WITH_META_API_VERSION"
-
-META_GRAPH_API_URL = f"https://graph.facebook.com/{META_GRAPH_API_VERSION}"
+META_GRAPH_API_VERSION = os.getenv("META_GRAPH_API_VERSION") or "v26.0"
+META_GRAPH_API_URL = f"https://graph.instagram.com/{META_GRAPH_API_VERSION}"
 
 
 def create_instagram_media_container(
@@ -61,13 +60,22 @@ def publish_instagram_media(
 
     response = requests.post(url, data=data, timeout=30)
 
+
     if not response.ok:
         raise Exception(
             f"Instagram media publishing failed: "
             f"{response.status_code} - {response.text}"
         )
 
-    return response.json()
+    result = response.json()
+
+    if not result.get("id"):
+        raise Exception(
+            f"Instagram API did not return a published media ID: {result}"
+        )
+
+    return result
+
 
 
 def publish_instagram_image(

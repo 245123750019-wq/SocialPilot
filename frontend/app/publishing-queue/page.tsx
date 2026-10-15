@@ -67,6 +67,7 @@ export default function PublishingQueuePage() {
         );
       }
 
+      console.log("Publishing queue API response:", data);
       setPosts(data);
     } catch (err) {
       console.error("Publishing queue error:", err);

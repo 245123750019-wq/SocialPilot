@@ -29,6 +29,10 @@ export default function Profile() {
 
   const [youtubeAccount, setYoutubeAccount] =
     useState<SocialAccount | null>(null);
+  const [instagramAccount, setInstagramAccount] =
+    useState<SocialAccount | null>(null);
+  const [xAccount, setXAccount] =
+    useState<SocialAccount | null>(null);
 
   const [disconnecting, setDisconnecting] =
     useState(false);
@@ -276,16 +280,31 @@ const saveProfile = async () => {
           const accountsData =
             await accountsResponse.json();
 
-          const youtube =
-            accountsData.find(
+            const youtube = accountsData.find(
               (account: SocialAccount) =>
-                account.platform.toLowerCase() ===
-                "youtube"
+                account.platform.toLowerCase() === "youtube"
             );
 
-          if (youtube) {
-            setYoutubeAccount(youtube);
-          }
+            const instagram = accountsData.find(
+              (account: SocialAccount) =>
+                account.platform.toLowerCase() === "instagram" &&
+                account.username === "__bhavanii__1"
+            );
+            const x = accountsData.find(
+              (account: SocialAccount) =>
+                account.platform.toLowerCase() === "x"
+            );
+
+            if (youtube) {
+              setYoutubeAccount(youtube);
+            }
+
+            if (instagram) {
+              setInstagramAccount(instagram);
+            }
+            if (x) {
+              setXAccount(x);
+            }
         }
       } catch (error) {
         console.error(
@@ -546,6 +565,60 @@ const saveProfile = async () => {
           <p className="text-slate-500 mt-2">
             Connect your social media accounts to publish content.
           </p>
+
+<div className="mt-6 flex items-center justify-between bg-slate-50 rounded-xl p-5">
+  <div>
+    <p className="font-semibold text-slate-900">
+      Instagram
+    </p>
+    <p className="text-sm text-slate-500 mt-1">
+      Connect your Instagram account for image publishing.
+    </p>
+  </div>
+
+  {instagramAccount ? (
+    <div className="flex flex-col items-end gap-2">
+      <span className="px-5 py-2.5 rounded-lg bg-green-100 text-green-700 font-semibold">
+        ✓ Connected
+      </span>
+      <p className="text-sm text-slate-500">
+        {instagramAccount.username}
+      </p>
+    </div>
+  ) : (
+    <span className="px-5 py-2.5 rounded-lg bg-slate-200 text-slate-600 font-semibold">
+      Not connected
+    </span>
+  )}
+</div>
+
+
+<div className="mt-6 flex items-center justify-between bg-slate-50 rounded-xl p-5">
+  <div>
+    <p className="font-semibold text-slate-900">
+      X
+    </p>
+    <p className="text-sm text-slate-500 mt-1">
+      Connect your X account for social media publishing.
+    </p>
+  </div>
+
+  {xAccount ? (
+    <div className="flex flex-col items-end gap-2">
+      <span className="px-5 py-2.5 rounded-lg bg-green-100 text-green-700 font-semibold">
+        ✓ Connected
+      </span>
+      <p className="text-sm text-slate-500">
+        {xAccount.username}
+      </p>
+    </div>
+  ) : (
+    <span className="px-5 py-2.5 rounded-lg bg-slate-200 text-slate-600 font-semibold">
+      Not connected
+    </span>
+  )}
+</div>
+
 
           <div className="mt-6 flex items-center justify-between bg-slate-50 rounded-xl p-5">
 
