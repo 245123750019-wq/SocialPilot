@@ -13,14 +13,17 @@ const menuSections = [
       { label: "Publishing Calendar", href: "/calendar", icon: "📅" },
     ],
   },
-  {
-    title: "CONTENT",
-    items: [
-      { label: "Create Post", href: "/create-post", icon: "✏️" },
-      { label: "Publishing Queue", href: "/publishing-queue", icon: "📋" },
-      { label: "Publishing Logs", href: "/publishing-logs", icon: "📊" },
-    ],
-  },
+
+{
+  title: "CONTENT",
+  items: [
+    { label: "Create Post", href: "/create-post", icon: "✏️" },
+    { label: "Posts", href: "/posts", icon: "📝" },
+    { label: "Publishing Queue", href: "/publishing-queue", icon: "📋" },
+    { label: "Publishing Logs", href: "/publishing-logs", icon: "📊" },
+  ],
+},
+
   {
     title: "CAMPAIGNS",
     items: [

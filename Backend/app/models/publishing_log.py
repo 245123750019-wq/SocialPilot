@@ -21,3 +21,4 @@ class PublishingLog(Base):
     published_at = Column(DateTime, nullable=True)
     error_message = Column(Text, nullable=True)
     retry_count = Column(Integer, nullable=True)
+    external_post_id = Column(String(255), nullable=True)

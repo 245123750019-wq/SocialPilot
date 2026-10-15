@@ -1,3 +1,4 @@
+
 from pydantic import BaseModel
 
 
@@ -11,3 +12,8 @@ class PublishingLogResponse(BaseModel):
     error_message: str | None
     retry_count: int
     content: str
+    media_url: str | None = None
+    post_type: str | None = None
+    account_id: int | None = None
+    username: str | None = None
+    external_post_id: str | None = None

@@ -87,6 +87,7 @@ def process_queue_item(queue_id: int):
 
             db.commit()
             return
+        external_post_id = None
         # ==================================================
         # INSTAGRAM
         # ==================================================
@@ -145,11 +146,11 @@ def process_queue_item(queue_id: int):
                 caption=post.content
                 )
 
-            print(
-                "Instagram publishing result:",
-                result
-            )
+            print("Instagram publishing result:", result, flush=True)
+            external_post_id = result.get("id")
 
+            if not external_post_id:
+                raise Exception("Instagram API did not return a published media ID.")
         # ==================================================
         # FACEBOOK
         # ==================================================
@@ -187,6 +188,10 @@ def process_queue_item(queue_id: int):
             )
 
             print("Facebook publishing result:", result, flush=True)
+            external_post_id = result.get("post_id") or result.get("id")
+
+            if not external_post_id:
+                raise Exception("Facebook API did not return a published post ID.")
 
 
 
@@ -280,9 +285,9 @@ def process_queue_item(queue_id: int):
             )
 
         else:
-
-            # Other platforms remain simulated for now.
-            pass
+            raise Exception(
+                f"Publishing is not supported for platform: {queue_item.platform}"
+            )
 
         # ==================================================
         # MARK AS PUBLISHED
@@ -301,7 +306,8 @@ def process_queue_item(queue_id: int):
             status="published",
             published_at=published_time,
             error_message=None,
-            retry_count=queue_item.retry_count or 0
+            retry_count=queue_item.retry_count or 0,
+            external_post_id=str(external_post_id) if external_post_id else None,
         )
 
         db.add(publishing_log)

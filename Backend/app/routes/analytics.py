@@ -2,6 +2,12 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from datetime import datetime
 
+from app.models.publishing_log import PublishingLog
+from app.services.social_analytics_service import (
+    fetch_instagram_metrics,
+    fetch_facebook_metrics,
+)
+
 from app.database.database import SessionLocal
 from app.models import (
     Post,
@@ -209,26 +215,39 @@ def get_campaign_analytics(
             "average_engagement_rate": 0.0
         }
 
-    analytics_records = (
-        db.query(PostAnalytics)
-        .filter(PostAnalytics.post_id.in_(post_ids))
-        .all()
-    )
 
-    total_likes = sum(item.likes for item in analytics_records)
-    total_comments = sum(item.comments for item in analytics_records)
-    total_shares = sum(item.shares for item in analytics_records)
-    total_reach = sum(item.reach for item in analytics_records)
-    total_impressions = sum(item.impressions for item in analytics_records)
-    total_clicks = sum(item.clicks for item in analytics_records)
+    # Use only the latest analytics snapshot for each post.
+    latest_records = []
 
-    if analytics_records:
+    for post_id in post_ids:
+        latest = (
+            db.query(PostAnalytics)
+            .filter(PostAnalytics.post_id == post_id)
+            .order_by(
+                PostAnalytics.recorded_at.desc().nullslast(),
+                PostAnalytics.analytics_id.desc(),
+            )
+            .first()
+        )
+
+        if latest:
+            latest_records.append(latest)
+
+    total_likes = sum(item.likes or 0 for item in latest_records)
+    total_comments = sum(item.comments or 0 for item in latest_records)
+    total_shares = sum(item.shares or 0 for item in latest_records)
+    total_reach = sum(item.reach or 0 for item in latest_records)
+    total_impressions = sum(item.impressions or 0 for item in latest_records)
+    total_clicks = sum(item.clicks or 0 for item in latest_records)
+
+    if latest_records:
         average_engagement_rate = (
-            sum(item.engagement_rate for item in analytics_records)
-            / len(analytics_records)
+            sum(item.engagement_rate or 0.0 for item in latest_records)
+            / len(latest_records)
         )
     else:
         average_engagement_rate = 0.0
+
 
     return {
         "campaign_id": campaign_id,
@@ -399,3 +418,85 @@ def get_audience_insights(
     )
 
     return insights
+
+@router.get("/published-posts")
+def get_published_post_metrics(
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    """Fetch current engagement metrics for the user's real published posts."""
+
+    results = (
+        db.query(PublishingLog, Post, SocialAccount)
+        .join(Post, PublishingLog.post_id == Post.post_id)
+        .join(SocialAccount, Post.account_id == SocialAccount.account_id)
+        .filter(
+            SocialAccount.user_id == user_id,
+            PublishingLog.status == "published",
+            PublishingLog.external_post_id.isnot(None),
+            Post.status == "published",
+        )
+        .order_by(PublishingLog.published_at.desc().nullslast())
+        .all()
+    )
+
+    response = []
+
+    for log, post, account in results:
+        metrics = {
+            "likes": None,
+            "comments": None,
+            "shares": None,
+            "reach": None,
+            "saved": None,
+            "error": None,
+        }
+
+        try:
+            if not account.access_token:
+                raise ValueError("No access token is saved for this account.")
+
+            platform = (account.platform or "").lower()
+
+            if platform == "instagram":
+                metrics.update(
+                    fetch_instagram_metrics(
+                        log.external_post_id,
+                        account.access_token,
+                    )
+                )
+            elif platform == "facebook":
+                metrics.update(
+                    fetch_facebook_metrics(
+                        log.external_post_id,
+                        account.access_token,
+                    )
+                )
+            else:
+                raise ValueError(
+                    f"Metrics are not supported for {account.platform} yet."
+                )
+
+        except Exception as exc:
+            # Keep the post visible even if its metrics cannot be fetched.
+            metrics["error"] = str(exc)
+
+        response.append(
+            {
+                "post_id": post.post_id,
+                "log_id": log.log_id,
+                "platform": account.platform,
+                "username": account.username,
+                "content": post.content or "",
+                "media_url": post.media_url,
+                "external_post_id": log.external_post_id,
+                "published_at": (
+                    log.published_at.isoformat()
+                    if log.published_at
+                    else None
+                ),
+                "metrics": metrics,
+            }
+        )
+
+    return response

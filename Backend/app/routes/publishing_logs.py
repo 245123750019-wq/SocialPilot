@@ -1,3 +1,4 @@
+
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
@@ -17,49 +18,34 @@ router = APIRouter(
 
 def get_db():
     db = SessionLocal()
-
     try:
         yield db
     finally:
         db.close()
 
 
-@router.get(
-    "/",
-    response_model=list[PublishingLogResponse]
-)
+@router.get("/", response_model=list[PublishingLogResponse])
 def get_publishing_logs(
     user_id: int = Depends(get_current_user_id),
-    db: Session = Depends(get_db)
+    db: Session = Depends(get_db),
 ):
-
     results = (
-        db.query(
-            PublishingLog,
-            Post,
-            SocialAccount
-        )
-        .join(
-            Post,
-            PublishingLog.post_id == Post.post_id
-        )
-        .join(
-            SocialAccount,
-            Post.account_id == SocialAccount.account_id
-        )
+        db.query(PublishingLog, Post, SocialAccount)
+        .join(Post, PublishingLog.post_id == Post.post_id)
+        .join(SocialAccount, Post.account_id == SocialAccount.account_id)
         .filter(
-            SocialAccount.user_id == user_id
+            SocialAccount.user_id == user_id,
+            PublishingLog.status == "published",
+            PublishingLog.external_post_id.isnot(None),
+            Post.status == "published",
         )
-        .order_by(
-            PublishingLog.published_at.desc().nullslast()
-        )
+        .order_by(PublishingLog.published_at.desc().nullslast())
         .all()
     )
 
     response = []
 
     for log, post, account in results:
-
         response.append(
             PublishingLogResponse(
                 log_id=log.log_id,
@@ -74,7 +60,12 @@ def get_publishing_logs(
                 ),
                 error_message=log.error_message,
                 retry_count=log.retry_count or 0,
-                content=post.content
+                content=post.content or "",
+                media_url=post.media_url,
+                post_type=post.post_type,
+                account_id=account.account_id,
+                username=account.username,
+                external_post_id=log.external_post_id,
             )
         )
 
