@@ -34,6 +34,7 @@ const menuSections = [
     title: "ACCOUNT",
     items: [
       { label: "Notifications", href: "/notifications", icon: "🔔" },
+      { label: "Social Accounts", href: "/social-accounts", icon: "🔗" },
       { label: "Profile", href: "/profile", icon: "👤" },
     ],
   },

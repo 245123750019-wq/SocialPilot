@@ -389,11 +389,9 @@ const saveProfile = async () => {
 
               </div>
 
-            </div>
+              </div>
 
-            </div>
-
-            <div className="p-8">
+<div className="p-8">
 
             <div className="flex items-center justify-between gap-4 mb-6">
             <h3 className="text-xl font-bold text-slate-900">
@@ -545,138 +543,13 @@ const saveProfile = async () => {
       >
         Cancel
       </button>
-    </div>
+      </div>
   </div>
 )}
-
-</div>
-
-</div>
-
-{/* Social Accounts */}
-
-
-        <div className="bg-white rounded-2xl shadow-sm border border-slate-200 mt-8 p-8">
-
-          <h3 className="text-xl font-bold text-slate-900">
-            Social Accounts
-          </h3>
-
-          <p className="text-slate-500 mt-2">
-            Connect your social media accounts to publish content.
-          </p>
-
-<div className="mt-6 flex items-center justify-between bg-slate-50 rounded-xl p-5">
-  <div>
-    <p className="font-semibold text-slate-900">
-      Instagram
-    </p>
-    <p className="text-sm text-slate-500 mt-1">
-      Connect your Instagram account for image publishing.
-    </p>
-  </div>
-
-  {instagramAccount ? (
-    <div className="flex flex-col items-end gap-2">
-      <span className="px-5 py-2.5 rounded-lg bg-green-100 text-green-700 font-semibold">
-        ✓ Connected
-      </span>
-      <p className="text-sm text-slate-500">
-        {instagramAccount.username}
-      </p>
-    </div>
-  ) : (
-    <span className="px-5 py-2.5 rounded-lg bg-slate-200 text-slate-600 font-semibold">
-      Not connected
-    </span>
-  )}
-</div>
-
-
-<div className="mt-6 flex items-center justify-between bg-slate-50 rounded-xl p-5">
-  <div>
-    <p className="font-semibold text-slate-900">
-      X
-    </p>
-    <p className="text-sm text-slate-500 mt-1">
-      Connect your X account for social media publishing.
-    </p>
-  </div>
-
-  {xAccount ? (
-    <div className="flex flex-col items-end gap-2">
-      <span className="px-5 py-2.5 rounded-lg bg-green-100 text-green-700 font-semibold">
-        ✓ Connected
-      </span>
-      <p className="text-sm text-slate-500">
-        {xAccount.username}
-      </p>
-    </div>
-  ) : (
-    <span className="px-5 py-2.5 rounded-lg bg-slate-200 text-slate-600 font-semibold">
-      Not connected
-    </span>
-  )}
-</div>
-
-
-          <div className="mt-6 flex items-center justify-between bg-slate-50 rounded-xl p-5">
-
-            <div>
-
-              <p className="font-semibold text-slate-900">
-                YouTube
-              </p>
-
-              <p className="text-sm text-slate-500 mt-1">
-                Connect your YouTube channel for video publishing.
-              </p>
-
-            </div>
-
-            {youtubeAccount ? (
-
-              <div className="flex flex-col items-end gap-2">
-
-                <span className="px-5 py-2.5 rounded-lg bg-green-100 text-green-700 font-semibold">
-                  ✓ Connected
-                </span>
-
-                <p className="text-sm text-slate-500">
-                  {youtubeAccount.username}
-                </p>
-
-                <button
-                  type="button"
-                  onClick={disconnectYouTube}
-                  disabled={disconnecting}
-                  className="px-5 py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  {disconnecting
-                    ? "Disconnecting..."
-                    : "Disconnect"}
-                </button>
-
-              </div>
-
-            ) : (
-
-              <button
-                type="button"
-                onClick={connectYouTube}
-                className="px-5 py-2.5 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition"
-              >
-                Connect YouTube
-              </button>
-
-            )}
-
-          </div>
-
         </div>
-
       </div>
-
-    </main>
+    </div>
+    </div>
+  </main>
   );
 }

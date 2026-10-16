@@ -6,7 +6,11 @@ from app.models.publishing_log import PublishingLog
 from app.services.social_analytics_service import (
     fetch_instagram_metrics,
     fetch_facebook_metrics,
+    fetch_instagram_follower_count,
+    fetch_facebook_follower_count,
+    fetch_youtube_subscriber_count,
 )
+
 
 from app.database.database import SessionLocal
 from app.models import (
@@ -264,6 +268,119 @@ def get_campaign_analytics(
             2
         )
     }
+
+
+
+@router.post("/audience/{account_id}/refresh")
+def refresh_audience_analytics(
+    account_id: int,
+    db: Session = Depends(get_db),
+    user_id: int = Depends(get_current_user_id),
+):
+    account = (
+        db.query(SocialAccount)
+        .filter(
+            SocialAccount.account_id == account_id,
+            SocialAccount.user_id == user_id,
+        )
+        .first()
+    )
+
+    if not account:
+        raise HTTPException(
+            status_code=404,
+            detail="Social account not found.",
+        )
+
+    platform = account.platform.strip().lower()
+
+    if platform not in ("instagram", "facebook", "youtube"):
+        raise HTTPException(
+            status_code=400,
+            detail="Audience refresh currently supports Instagram, Facebook, and YouTube only.",
+        )
+
+    if not account.access_token:
+        raise HTTPException(
+            status_code=400,
+            detail="Social account has no saved access token.",
+        )
+
+    platform_account_id = account.platform_account_id
+    if not platform_account_id:
+        raise HTTPException(
+            status_code=400,
+            detail="Platform account ID is not saved for this account.",
+        )
+
+
+    try:
+        if platform == "instagram":
+            followers_count = fetch_instagram_follower_count(
+                platform_account_id,
+                account.access_token,
+            )
+        elif platform == "facebook":
+            followers_count = fetch_facebook_follower_count(
+                platform_account_id,
+                account.access_token,
+            )
+        else:
+            followers_count = fetch_youtube_subscriber_count(
+                platform_account_id,
+                account.access_token,
+                account.refresh_token,
+            )
+    except Exception:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Could not retrieve audience count from {account.platform}.",
+        )
+
+
+    previous = (
+        db.query(AudienceAnalytics)
+        .filter(AudienceAnalytics.account_id == account_id)
+        .order_by(AudienceAnalytics.recorded_at.desc())
+        .first()
+    )
+
+    if previous and previous.followers_count == followers_count:
+        return {
+            "account_id": account_id,
+            "followers_count": followers_count,
+            "follower_growth": 0,
+            "recorded_at": previous.recorded_at,
+            "message": "Follower count unchanged; no duplicate snapshot saved.",
+        }
+
+    growth = (
+        followers_count - previous.followers_count
+        if previous
+        else 0
+    )
+
+    snapshot = AudienceAnalytics(
+        account_id=account_id,
+        followers_count=followers_count,
+        follower_growth=growth,
+        recorded_at=datetime.utcnow(),
+    )
+
+    db.add(snapshot)
+    db.commit()
+    db.refresh(snapshot)
+
+    return {
+        "account_id": account_id,
+        "followers_count": followers_count,
+        "follower_growth": growth,
+        "recorded_at": snapshot.recorded_at,
+        "message": f"Real {account.platform} audience snapshot saved.",
+    }
+
+
+
 @router.post(
     "/audience/{account_id}",
     response_model=AudienceAnalyticsResponse

@@ -78,11 +78,33 @@ export default function Dashboard() {
 >("overview");
   const [campaignAnalytics, setCampaignAnalytics] =
   useState<CampaignAnalytics | null>(null);
+  const [selectedEngagementPlatform, setSelectedEngagementPlatform] =
+  useState<"all" | "instagram" | "facebook">("all");
+  const [publishedPostMetrics, setPublishedPostMetrics] = useState<
+  {
+    post_id: number;
+    platform: string;
+    metrics: {
+      likes: number | null;
+      comments: number | null;
+      shares: number | null;
+      reach: number | null;
+      saved: number | null;
+      error: string | null;
+    };
+  }[]
+>([]);
 
 const [audienceAnalytics, setAudienceAnalytics] =
   useState<AudienceAnalytics | null>(null);
 const [audienceHistory, setAudienceHistory] =
   useState<AudienceAnalyticsHistory[]>([]);
+const [audienceHistories, setAudienceHistories] = useState<
+  Record<number, AudienceAnalyticsHistory[]>
+>({});
+
+const [selectedAudienceAccountId, setSelectedAudienceAccountId] =
+  useState<number | null>(null);
   interface AudienceInsight {
     insight_id: number;
     account_id: number;
@@ -96,27 +118,6 @@ const [audienceHistory, setAudienceHistory] =
 
   const [audienceInsights, setAudienceInsights] =
     useState<AudienceInsight[]>([]);
-  const engagementChartData = campaignAnalytics
-  ? [
-      {
-        metric: "Likes",
-        value: Number(campaignAnalytics.total_likes || 0),
-      },
-      {
-        metric: "Comments",
-        value: Number(campaignAnalytics.total_comments || 0),
-      },
-      {
-        metric: "Shares",
-        value: Number(campaignAnalytics.total_shares || 0),
-      },
-      {
-        metric: "Clicks",
-        value: Number(campaignAnalytics.total_clicks || 0),
-      },
-    ]
-  : [];
-
 const [analyticsLoading, setAnalyticsLoading] = useState(true);
 const [selectedCampaignId, setSelectedCampaignId] = useState<number | null>(null);
 const [campaigns, setCampaigns] = useState<Campaign[]>([]);
@@ -124,7 +125,39 @@ const [comparisonCampaignId, setComparisonCampaignId] =
   useState<number | null>(null);
 
 const [comparisonAnalytics, setComparisonAnalytics] =
+
   useState<CampaignAnalytics | null>(null);
+
+  const engagementChartData = (() => {
+    const validPosts = publishedPostMetrics.filter(
+      (post) =>
+        !post.metrics.error &&
+        ["instagram", "facebook"].includes(post.platform.toLowerCase()) &&
+        (selectedEngagementPlatform === "all" ||
+          post.platform.toLowerCase() === selectedEngagementPlatform)
+    );
+
+    const sumMetric = (
+      metric: "likes" | "comments" | "shares" | "reach" | "saved"
+    ) => {
+      const values = validPosts
+        .map((post) => post.metrics[metric])
+        .filter((value): value is number => value !== null);
+
+      return values.length
+        ? values.reduce((total, value) => total + value, 0)
+        : null;
+    };
+
+    return [
+      { metric: "Likes", value: sumMetric("likes") },
+      { metric: "Comments", value: sumMetric("comments") },
+      { metric: "Shares", value: sumMetric("shares") },
+      { metric: "Reach", value: sumMetric("reach") },
+      { metric: "Saves", value: sumMetric("saved") },
+    ];
+  })();
+
 
   // Connect account form state
   const [showConnectForm, setShowConnectForm] = useState(false);
@@ -179,7 +212,33 @@ const [comparisonAnalytics, setComparisonAnalytics] =
         }
 
         const accountsData = await accountsResponse.json();
-        setAccounts(accountsData);
+        console.log("Social accounts API response:", accountsData);
+
+        const updatedAccounts = accountsData.map((account: SocialAccount) =>
+          account.account_id === 27
+            ? { ...account, username: "My Facebook Page" }
+            : account
+        );
+
+        setAccounts(updatedAccounts);
+        // Load live metrics for published posts
+const publishedPostsResponse = await fetch(
+  `${process.env.NEXT_PUBLIC_API_URL}/analytics/published-posts`,
+  {
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+    cache: "no-store",
+  }
+);
+
+if (publishedPostsResponse.ok) {
+  const publishedPostsData = await publishedPostsResponse.json();
+
+  if (Array.isArray(publishedPostsData)) {
+    setPublishedPostMetrics(publishedPostsData);
+  }
+}
                 // Get campaign analytics
                 // Get the user's campaigns
                 const campaignsResponse = await fetch(
@@ -221,16 +280,37 @@ const [comparisonAnalytics, setComparisonAnalytics] =
   }
 }
 
-// Get analytics for the user's connected Instagram account
-const instagramAccount =
-  accountsData.find(
-    (account: SocialAccount) =>
-      account.platform.toLowerCase() === "instagram"
-  ) || accountsData[0];
 
-  if (instagramAccount) {
-    const audienceResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/analytics/audience/${instagramAccount.account_id}`,
+// Load audience analytics for supported connected platforms
+const supportedPlatforms = ["instagram", "facebook", "youtube"];
+
+const audienceAccounts = accountsData.filter(
+  (account: SocialAccount) =>
+    supportedPlatforms.includes(account.platform.toLowerCase()) &&
+    (
+      !/demo|test/i.test(account.username) ||
+      account.account_id === 27
+    )
+);
+
+const histories: Record<number, AudienceAnalyticsHistory[]> = {};
+
+for (const account of audienceAccounts) {
+  const accountId = account.account_id;
+
+  try {
+    await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/analytics/audience/${accountId}/refresh`,
+      {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
+
+    const historyResponse = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/analytics/audience/${accountId}`,
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -238,37 +318,69 @@ const instagramAccount =
       }
     );
 
-    if (audienceResponse.ok) {
-      const audienceData = await audienceResponse.json();
+    if (historyResponse.ok) {
+      const historyData = await historyResponse.json();
 
-      if (Array.isArray(audienceData)) {
-        setAudienceHistory(audienceData);
-
-        if (audienceData.length > 0) {
-          setAudienceAnalytics(
-            audienceData[audienceData.length - 1]
-          );
-        }
+      if (Array.isArray(historyData)) {
+        histories[accountId] = historyData;
       }
     }
-
-    const audienceInsightsResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/analytics/audience-insights/${instagramAccount.account_id}`,
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
+  } catch (error) {
+    console.error(
+      `Failed to load audience history for account ${accountId}:`,
+      error
     );
+  }
+}
+console.log("Loaded audience histories:", histories);
+console.log("Facebook history:", histories[27]);
+setAudienceHistories(histories);
 
-    if (audienceInsightsResponse.ok) {
-      const insightsData = await audienceInsightsResponse.json();
+const firstAccountWithHistory = audienceAccounts.find(
+  (account: SocialAccount) =>
+    (histories[account.account_id] ?? []).length > 0
+);
 
-      if (Array.isArray(insightsData)) {
-        setAudienceInsights(insightsData);
-      }
+setSelectedAudienceAccountId(
+  firstAccountWithHistory?.account_id ?? null
+);
+
+const selectedHistory = firstAccountWithHistory
+  ? histories[firstAccountWithHistory.account_id] ?? []
+  : [];
+
+setAudienceHistory(selectedHistory);
+
+if (selectedHistory.length > 0) {
+  setAudienceAnalytics(selectedHistory[selectedHistory.length - 1]);
+}
+
+// Keep the existing Instagram audience insights behavior
+const instagramAccount = audienceAccounts.find(
+  (account: SocialAccount) =>
+    account.platform.toLowerCase() === "instagram"
+);
+
+if (instagramAccount) {
+  const audienceInsightsResponse = await fetch(
+    `${process.env.NEXT_PUBLIC_API_URL}/analytics/audience-insights/${instagramAccount.account_id}`,
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    }
+  );
+
+  if (audienceInsightsResponse.ok) {
+    const insightsData = await audienceInsightsResponse.json();
+
+    if (Array.isArray(insightsData)) {
+      setAudienceInsights(insightsData);
     }
   }
+}
+
+
       } catch (error) {
         console.error("Dashboard error:", error);
       } finally {
@@ -623,186 +735,130 @@ const instagramAccount =
 {activeTab === "overview" && (
   <div className="space-y-8">
 
+
     {/* Key Metrics */}
-<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+
 
 {/* Engagement */}
 <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">
-  <p className="text-sm font-medium text-slate-500">
-    Engagement
-  </p>
+  <p className="text-sm font-medium text-slate-500">Engagement</p>
 
   <p className="text-2xl sm:text-3xl font-bold text-slate-900 mt-2">
-    {campaignAnalytics
-      ? Number(campaignAnalytics.total_likes || 0) +
-        Number(campaignAnalytics.total_comments || 0) +
-        Number(campaignAnalytics.total_shares || 0)
-      : 0}
+    {["likes", "comments", "shares"].reduce((total, metric) => {
+      const values = publishedPostMetrics
+        .filter(
+          (post) =>
+            !post.metrics.error &&
+            ["instagram", "facebook"].includes(post.platform.toLowerCase()) &&
+            (selectedEngagementPlatform === "all" ||
+              post.platform.toLowerCase() === selectedEngagementPlatform)
+        )
+        .map(
+          (post) =>
+            post.metrics[metric as "likes" | "comments" | "shares"]
+        )
+        .filter((value): value is number => value !== null);
+
+      return total + values.reduce((sum, value) => sum + value, 0);
+    }, 0)}
   </p>
 
   <p className="text-xs text-slate-400 mt-2">
-    Likes + comments + shares
+    Likes + comments + shares on published posts
   </p>
 </div>
+
+
 
 {/* Reach */}
 <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">
-  <p className="text-sm font-medium text-slate-500">
-    Reach
-  </p>
+  <p className="text-sm font-medium text-slate-500">Reach</p>
 
   <p className="text-2xl sm:text-3xl font-bold text-slate-900 mt-2">
-    {campaignAnalytics
-      ? Number(campaignAnalytics.total_reach || 0)
-      : 0}
+    {(() => {
+      const values = publishedPostMetrics
+        .filter(
+          (post) =>
+            !post.metrics.error &&
+            ["instagram", "facebook"].includes(post.platform.toLowerCase()) &&
+            (selectedEngagementPlatform === "all" ||
+              post.platform.toLowerCase() === selectedEngagementPlatform)
+        )
+        .map((post) => post.metrics.reach)
+        .filter((value): value is number => value !== null);
+
+      return values.length
+        ? values.reduce((sum, value) => sum + value, 0)
+        : "—";
+    })()}
   </p>
 
   <p className="text-xs text-slate-400 mt-2">
-    Total users reached
+    Sum of reported post reach
   </p>
 </div>
 
-{/* Impressions */}
-<div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">
-  <p className="text-sm font-medium text-slate-500">
-    Impressions
-  </p>
 
-  <p className="text-2xl sm:text-3xl font-bold text-slate-900 mt-2">
-    {campaignAnalytics
-      ? Number(campaignAnalytics.total_impressions || 0)
-      : 0}
-  </p>
-
-  <p className="text-xs text-slate-400 mt-2">
-    Total content views
-  </p>
-</div>
-
-{/* Clicks */}
-<div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">
-  <p className="text-sm font-medium text-slate-500">
-    Clicks
-  </p>
-
-  <p className="text-2xl sm:text-3xl font-bold text-slate-900 mt-2">
-    {campaignAnalytics
-      ? Number(campaignAnalytics.total_clicks || 0)
-      : 0}
-  </p>
-
-  <p className="text-xs text-slate-400 mt-2">
-    Total link clicks
-  </p>
-</div>
-
-</div>
-
-{/* Engagement Overview */}
-<div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-8 overflow-hidden">
-
-<div className="mb-6">
-  <h2 className="text-xl font-bold text-slate-900">
-    Engagement Overview
-  </h2>
-
-  <p className="text-sm text-slate-500 mt-1">
-    Engagement generated by your selected campaign.
-  </p>
-</div>
-
-{engagementChartData.length > 0 ? (
-  <div className="h-64 sm:h-80 w-full min-w-0">
-
-    <ResponsiveContainer width="100%" height="100%">
-      <BarChart data={engagementChartData}>
-
-        <CartesianGrid strokeDasharray="3 3" />
-
-        <XAxis dataKey="metric" />
-
-        <YAxis />
-
-        <Tooltip
-          formatter={(value, name) => [value, String(name)]}
-          labelFormatter={(label) => String(label)}
-        />
-
-        <Bar
-          dataKey="value"
-          fill="#4f46e5"
-          radius={[6, 6, 0, 0]}
-        />
-
-      </BarChart>
-    </ResponsiveContainer>
-
-  </div>
-) : (
-  <div className="h-64 sm:h-80 flex items-center justify-center text-slate-500">
-    No engagement data available.
-  </div>
-)}
-
-</div>
-    {/* Audience Growth */}
-    <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8">
-
-      <div className="mb-6">
-        <h2 className="text-xl font-bold text-slate-900">
-          Audience Growth
-        </h2>
-
-        <p className="text-sm text-slate-500 mt-1">
-          Follower growth over time.
-        </p>
+      {/* Impressions */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">
+        <p className="text-sm font-medium text-slate-500">Impressions</p>
+        <p className="text-2xl sm:text-3xl font-bold text-slate-900 mt-2">—</p>
+        <p className="text-xs text-slate-400 mt-2">Not available for all connected platforms</p>
       </div>
 
-      {audienceHistory.length > 0 ? (
-        <div className="h-80">
-
-          <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={audienceHistory}>
-
-              <CartesianGrid strokeDasharray="3 3" />
-
-              <XAxis
-                dataKey="recorded_at"
-                tickFormatter={(value) =>
-                  new Date(value).toLocaleDateString()
-                }
-              />
-
-              <YAxis />
-
-              <Tooltip
-                  labelFormatter={(value) =>
-                    new Date(String(value)).toLocaleDateString()
-                  }
-              />
-
-              <Line
-                type="monotone"
-                dataKey="followers_count"
-                stroke="#4f46e5"
-                strokeWidth={3}
-                dot={{ r: 4 }}
-              />
-
-            </LineChart>
-          </ResponsiveContainer>
-
+      {/* Clicks */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">
+        <p className="text-sm font-medium text-slate-500">Clicks</p>
+        <p className="text-2xl sm:text-3xl font-bold text-slate-900 mt-2">—</p>
+        <p className="text-xs text-slate-400 mt-2">
+          Post link-click metrics are not currently fetched
+        </p>
         </div>
-      ) : (
-        <div className="h-80 flex items-center justify-center text-slate-500">
-          No audience growth data available.
-        </div>
-      )}
 
-    </div>
+{/* Published Posts */}
+<div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">
+  <p className="text-sm font-medium text-slate-500">Published Posts</p>
 
-  </div>
-)}
+  <p className="text-2xl sm:text-3xl font-bold text-slate-900 mt-2">
+    {publishedPostMetrics.filter((post) => !post.metrics.error).length}
+  </p>
+
+  <p className="text-xs text-slate-400 mt-2">
+    Published posts with fetched metrics
+  </p>
+</div>
+
+{/* Connected Social Accounts */}
+<div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">
+  <p className="text-sm font-medium text-slate-500">
+    Connected Social Accounts
+  </p>
+
+  <p className="text-2xl sm:text-3xl font-bold text-slate-900 mt-2">
+    {
+      accounts.filter(
+        (account) =>
+          (!/demo/i.test(account.username) || account.account_id === 27)
+      ).length
+    }
+  </p>
+
+  <p className="text-xs text-slate-400 mt-2">
+    {[
+      ...new Set(
+        accounts
+          .filter(
+            (account) =>
+              (!/demo/i.test(account.username) || account.account_id === 27)
+          )
+          .map((account) => account.platform)
+      ),
+    ].join(" · ")} accounts
+  </p>
+</div>
+</div></div>
+  )}
 
 {/* Campaigns Tab */}
 {activeTab === "campaigns" && (
@@ -973,6 +1029,25 @@ const instagramAccount =
         <h2 className="text-lg font-semibold text-slate-900">
           Engagement Metrics
         </h2>
+        <div className="mt-5">
+  <label className="block text-sm font-medium text-slate-700 mb-2">
+    Select platform
+  </label>
+
+  <select
+    value={selectedEngagementPlatform}
+    onChange={(event) =>
+      setSelectedEngagementPlatform(
+        event.target.value as "all" | "instagram" | "facebook"
+      )
+    }
+    className="w-full max-w-md rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700"
+  >
+    <option value="all">All platforms</option>
+    <option value="instagram">Instagram</option>
+    <option value="facebook">Facebook</option>
+  </select>
+</div>
         <p className="text-sm text-slate-500 mt-1">
           Interactive campaign engagement performance
         </p>
@@ -980,12 +1055,42 @@ const instagramAccount =
 
         <div className="w-full h-80">
         <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={engagementChartData}>
+        <BarChart
+  data={engagementChartData.map((item) => {
+    const metricKey = {
+      Likes: "likes",
+      Comments: "comments",
+      Shares: "shares",
+      Reach: "reach",
+      Saves: "saved",
+    } as const;
+
+    const key = metricKey[item.metric as keyof typeof metricKey];
+
+    const total = publishedPostMetrics
+      .filter(
+        (post) =>
+          !post.metrics.error &&
+          ["instagram", "facebook"].includes(post.platform.toLowerCase()) &&
+          (selectedEngagementPlatform === "all" ||
+            post.platform.toLowerCase() === selectedEngagementPlatform)
+      )
+      .map((post) => post.metrics[key])
+      .filter((value): value is number => value !== null)
+      .reduce((sum, value) => sum + value, 0);
+
+    return { ...item, value: total };
+  })}
+>
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="metric" />
         <YAxis allowDecimals={false} />
         <Tooltip />
-        <Bar dataKey="value" />
+        <Bar
+          dataKey="value"
+          fill="#4f46e5"
+          radius={[6, 6, 0, 0]}
+        />
         </BarChart>
         </ResponsiveContainer>
         </div>
@@ -1000,26 +1105,154 @@ const instagramAccount =
         <h3 className="text-lg font-semibold text-slate-900">
         Audience Growth Trend
         </h3>
-        <p className="text-sm text-slate-500 mt-1">
-        Follower growth over time
-        </p>
+          <p className="text-sm text-slate-500 mt-1">
+            Follower growth over time
+          </p>
+
+          <div className="mb-5 max-w-md">
+            <label className="block text-sm font-medium text-slate-700 mb-2">
+              Select social account
+              </label>
+
+            <select
+              value={selectedAudienceAccountId ?? ""}
+              onChange={(event) => {
+              const accountId = event.target.value
+                  ? Number(event.target.value)
+                  : null;
+
+              setSelectedAudienceAccountId(accountId);
+
+              const history = accountId
+                ? audienceHistories[accountId] ?? []
+                : [];
+
+              setAudienceHistory(history);
+              setAudienceAnalytics(
+              history.length > 0 ? history[history.length - 1] : null
+              );
+            }}
+            className="w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900"
+          >
+            <option value="">Select an account</option>
+
+            {accounts
+              .filter((account) =>
+                ["instagram", "facebook", "youtube"].includes(
+                  account.platform.toLowerCase()
+                ) &&
+                !/demo|test/i.test(account.username) ||
+                account.account_id === 27
+              )
+              .map((account) => (
+                <option key={account.account_id} value={account.account_id}>
+                  {account.platform} — {account.username}
+                </option>
+              ))}
+</select>
+        </div>
+
+
+{/* Current Audience Count */}
+<div className="mb-5 rounded-xl bg-indigo-50 border border-indigo-100 p-5">
+  <p className="text-sm font-medium text-indigo-700">
+    Current {
+      accounts.find(
+        (account) =>
+          account.account_id === selectedAudienceAccountId
+      )?.platform.toLowerCase() === "youtube"
+        ? "Subscribers"
+        : "Followers"
+    }
+  </p>
+
+  <p className="mt-1 text-3xl font-bold text-indigo-900">
+    {selectedAudienceAccountId !== null &&
+    audienceHistories[selectedAudienceAccountId]?.length
+      ? audienceHistories[selectedAudienceAccountId][
+          audienceHistories[selectedAudienceAccountId].length - 1
+        ].followers_count
+      : "—"}
+  </p>
+
+
+  {(() => {
+  const history =
+    selectedAudienceAccountId !== null
+      ? audienceHistories[selectedAudienceAccountId] ?? []
+      : [];
+
+  const latest = history[history.length - 1];
+  const previous = history[history.length - 2];
+
+  const change =
+    latest && previous
+      ? latest.followers_count - previous.followers_count
+      : null;
+
+  const growthPercentage =
+    latest && previous && previous.followers_count > 0
+      ? (change! / previous.followers_count) * 100
+      : null;
+
+  return (
+    <>
+      <p className="mt-2 text-sm font-medium text-slate-700">
+        Change from previous snapshot:{" "}
+        {change === null
+          ? "Not enough history yet"
+          : change > 0
+            ? `+${change}`
+            : change}
+      </p>
+
+      <p className="mt-1 text-sm font-medium text-slate-700">
+        Growth percentage:{" "}
+        {growthPercentage === null
+          ? "Not available"
+          : `${growthPercentage > 0 ? "+" : ""}${growthPercentage.toFixed(2)}%`}
+      </p>
+    </>
+  );
+})()}
+
+
+  <p className="mt-1 text-sm text-slate-500">
+    {
+      accounts.find(
+        (account) =>
+          account.account_id === selectedAudienceAccountId
+      )?.platform ?? "Select a platform"
+    } audience
+  </p>
+</div>
+
+
       </div>
 
   <div className="w-full h-80">
     <ResponsiveContainer width="100%" height="100%">
       <LineChart
-        data={audienceHistory.map((item) => ({
-          date: item.recorded_at
-            ? new Date(item.recorded_at).toLocaleDateString(
-                "en-IN",
-                {
+
+
+        data={audienceHistory
+          .filter((item, index, history) =>
+            index === 0 ||
+            item.followers_count !== history[index - 1].followers_count
+          )
+          .map((item) => ({
+            date: item.recorded_at
+              ? new Date(item.recorded_at).toLocaleString("en-IN", {
                   day: "2-digit",
                   month: "short",
-                }
-              )
-            : "Unknown",
-          followers: item.followers_count,
-        }))}
+                  hour: "2-digit",
+                  minute: "2-digit",
+                })
+              : "Unknown",
+            followers: item.followers_count,
+          }))}
+
+
       >
         <CartesianGrid strokeDasharray="3 3" />
         <XAxis dataKey="date" />

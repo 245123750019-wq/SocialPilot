@@ -9,6 +9,7 @@ class SocialAccount(Base):
     user_id = Column(Integer, ForeignKey("users.user_id", ondelete="CASCADE"), nullable=True)
     platform = Column(String(50), nullable=False)
     username = Column(String(100), nullable=False)
+    platform_account_id = Column(String(255), nullable=True)
     access_token = Column(Text, nullable=True)
     refresh_token = Column(Text, nullable=True)
     created_at = Column(DateTime, nullable=True)
