@@ -359,3 +359,11 @@ SocialPilot is being developed incrementally as part of a collaborative project.
 ## 16. License
 
 Add the applicable license and attribution information according to the project's repository and team requirements.
+
+
+## Live Demo
+
+- **Frontend:** https://socialpilot-beta.vercel.app
+- **Backend API:** https://socialpilot-backend-h0uo.onrender.com
+
+> Note: The backend is hosted on Render's free instance and may take some time to respond after a period of inactivity.
