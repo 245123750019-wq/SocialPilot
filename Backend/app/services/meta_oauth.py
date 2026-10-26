@@ -28,11 +28,14 @@ INSTAGRAM_SCOPES = [
     "instagram_business_content_publish",
 ]
 
+
 FACEBOOK_SCOPES = [
     "pages_show_list",
     "pages_read_engagement",
     "pages_manage_posts",
+    "read_insights",
 ]
+
 
 
 def _check_meta_config(redirect_uri: str):
