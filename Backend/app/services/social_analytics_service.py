@@ -8,43 +8,71 @@ INSTAGRAM_GRAPH_API_URL = "https://graph.instagram.com/v26.0"
 FACEBOOK_GRAPH_API_URL = "https://graph.facebook.com/v26.0"
 
 
+
+
+
 def fetch_instagram_metrics(
     external_post_id: str,
     access_token: str,
 ) -> dict:
-    """Fetch the latest available metrics for a published Instagram post."""
+    """Fetch available insights for a published Instagram post."""
 
     if not external_post_id or not access_token:
         raise ValueError("Instagram post ID and access token are required.")
 
     url = f"{INSTAGRAM_GRAPH_API_URL}/{external_post_id}/insights"
-
-    response = requests.get(
-        url,
-        params={
-            "metric": "likes,comments,shares,saved,reach",
-            "access_token": access_token,
-        },
-        timeout=30,
-    )
-
-    if not response.ok:
-        raise Exception(
-            f"Instagram metrics request failed: "
-            f"{response.status_code} - {response.text}"
-        )
-
-    result = response.json()
     metrics = {}
 
-    for item in result.get("data", []):
-        name = item.get("name")
-        values = item.get("values", [])
+    for metric in (
+        "likes",
+        "comments",
+        "shares",
+        "saved",
+        "reach",
+        "views",
+    ):
+        response = requests.get(
+            url,
+            params={
+                "metric": metric,
+                "access_token": access_token,
+            },
+            timeout=30,
+        )
 
-        if name and values:
-            metrics[name] = values[0].get("value")
+        if not response.ok:
+            # Skip an unsupported metric, but don't hide authentication
+            # or permission errors.
+            if response.status_code in (401, 403):
+                raise Exception(
+                    f"Instagram metrics request failed: "
+                    f"{response.status_code} - {response.text}"
+                )
+
+            if metric == "views":
+                continue
+
+            raise Exception(
+                f"Instagram metrics request failed for {metric}: "
+                f"{response.status_code} - {response.text}"
+            )
+
+        for item in response.json().get("data", []):
+            name = item.get("name")
+            values = item.get("values", [])
+
+            if name and values:
+                metrics[name] = values[0].get("value")
+
+    if not metrics:
+        raise Exception(
+            "Instagram returned no available insights for this post."
+        )
 
     return metrics
+
+
+
 
 
 def fetch_facebook_metrics(

@@ -89,6 +89,7 @@ export default function Dashboard() {
       comments: number | null;
       shares: number | null;
       reach: number | null;
+      views: number | null;
       saved: number | null;
       error: string | null;
     };
@@ -800,12 +801,29 @@ if (instagramAccount) {
 </div>
 
 
-      {/* Impressions */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">
-        <p className="text-sm font-medium text-slate-500">Impressions</p>
-        <p className="text-2xl sm:text-3xl font-bold text-slate-900 mt-2">—</p>
-        <p className="text-xs text-slate-400 mt-2">Not available for all connected platforms</p>
-      </div>
+{/* Views */}
+<div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">
+  <p className="text-sm font-medium text-slate-500">Views</p>
+  <p className="text-2xl sm:text-3xl font-bold text-slate-900 mt-2">
+    {(() => {
+      const values = publishedPostMetrics
+        .filter(
+          (post) =>
+            post.platform.toLowerCase() === "instagram" &&
+            !post.metrics.error &&
+            typeof post.metrics.views === "number"
+        )
+        .map((post) => post.metrics.views as number);
+
+      return values.length
+        ? values.reduce((sum, value) => sum + value, 0)
+        : "—";
+    })()}
+  </p>
+  <p className="text-xs text-slate-400 mt-2">
+    Sum of reported Instagram post views
+  </p>
+</div>
 
       {/* Clicks */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-4 sm:p-6">
